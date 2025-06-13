@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "266920629394",
+    "project_id": "book-journal-68a53",
+    "storage_bucket": "book-journal-68a53.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266920629394:android:ee55a743825e0495ad424b",
+        "android_client_info": {
+          "package_name": "com.example.book_journal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwg9UvRQIM79Lh0UHS5KoQR05E5Kcq1Xg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
