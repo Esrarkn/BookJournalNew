@@ -1,6 +1,7 @@
 import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_bloc.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_state.dart';
+import 'package:book_journal/ui/models/user.dart';
 import 'package:book_journal/ui/screens/bookGoalsPage.dart';
 import 'package:book_journal/ui/screens/bookPage.dart';
 import 'package:book_journal/ui/screens/profilePage.dart';
@@ -10,7 +11,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final AppUser user;
+
+  const HomePage({super.key, required this.user});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -57,7 +60,7 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           BookGoalsPage(),
-          ProfilePage(),
+          ProfilePage(user: widget.user),
         ],
       ),
       bottomNavigationBar: NavigationBar(

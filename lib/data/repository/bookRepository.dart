@@ -1,4 +1,4 @@
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 
 abstract class BookRepository {
   Future<List<Book>> getBooks();

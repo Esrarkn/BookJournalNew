@@ -1,6 +1,6 @@
 import 'package:book_journal/data/repository/bookRepository.dart';
 import 'package:book_journal/data/services/firebase_service.dart';
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 
 class FirebaseBookRepository implements BookRepository {
   final FirebaseService _firebaseService = FirebaseService();

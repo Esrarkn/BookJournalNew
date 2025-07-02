@@ -1,4 +1,5 @@
-import 'package:book_journal/ui/screens/widgets/onBoarding.dart';
+import 'package:book_journal/ui/screens/logInPage.dart';
+import 'package:book_journal/ui/widgets/onBoarding.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -70,19 +71,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   SizedBox(height: height * 0.02),
-                  _currentPage == onboardingData.length - 1
-                      ? FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: ElevatedButton(
-                                      onPressed: () {
-                                        controller.nextPage(
-                                            duration: const Duration(
-                                                milliseconds: 300),
-                                            curve: Curves.easeIn);
-                                      },
-                                      child: Text("Örnek Yazı1"),
-                                    ),
-                        )
+_currentPage == onboardingData.length - 1
+    ? FittedBox(
+        fit: BoxFit.scaleDown,
+        child: ElevatedButton(
+          onPressed: () {
+            print("Butona tıklandı"); // test için
+            Navigator.pushReplacement(context, MaterialPageRoute(builder:(context)=> const LogInPage()));
+          },
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            backgroundColor: Colors.teal,
+          ),
+          child: const Text("Hadi Başlayalım!", style: TextStyle(fontSize: 16)),
+        ),
+      )
+
+
+
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [

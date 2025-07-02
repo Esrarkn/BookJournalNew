@@ -1,44 +1,32 @@
 import 'package:equatable/equatable.dart';
+import 'package:book_journal/ui/models/bookGoal.dart';
 
-// Goal Durumları (States)
 abstract class GoalState extends Equatable {
   const GoalState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
+// Başlangıç durumu
 class GoalInitial extends GoalState {}
 
+// Yükleniyor durumu
 class GoalLoading extends GoalState {}
 
-class GoalLoaded extends GoalState {
-  final int targetBooks; // Hedeflenen kitap sayısı
-  final int completedBooks; // Tamamlanan kitap sayısı
+// Yükleme başarılı, veri geldi
+class GoalLoadSuccess extends GoalState {
+  final BookGoal bookGoal;
 
-  const GoalLoaded({
-    required this.targetBooks,
-    required this.completedBooks,
-  });
+  const GoalLoadSuccess(this.bookGoal);
 
   @override
-  List<Object> get props => [targetBooks, completedBooks];
+  List<Object?> get props => [bookGoal];
 }
 
-class GoalProgressUpdated extends GoalState {
-  final int completedBooks;
-
-  const GoalProgressUpdated({required this.completedBooks});
-
-  @override
-  List<Object> get props => [completedBooks];
-}
-
-class GoalError extends GoalState {
+// Hata durumu
+class GoalFailure extends GoalState {
   final String message;
-
-  const GoalError(this.message);
-
-  @override
-  List<Object> get props => [message];
+  GoalFailure(this.message);
 }
+

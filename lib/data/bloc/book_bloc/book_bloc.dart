@@ -2,7 +2,7 @@ import 'package:book_journal/data/bloc/book_bloc/book_event.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_state.dart';
 import 'package:book_journal/data/repository/bookRepository.dart';
 import 'package:book_journal/data/services/google_books_service.dart';
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BookBloc extends Bloc<BookEvent, BookState> {
@@ -19,19 +19,31 @@ class BookBloc extends Bloc<BookEvent, BookState> {
     on<FetchBooks>(_onFetchBooks);
     on<FilterBooks>(_onFilterBooks);
      on<ReadingStats>(_onLoadReadingStats);
+     on<SearchBooks>(_onSearchBooks);
+
   }
+String normalize(String input) {
+  return input.toLowerCase()
+    .replaceAll('ç', 'c')
+    .replaceAll('ğ', 'g')
+    .replaceAll('ı', 'i')
+    .replaceAll('ö', 'o')
+    .replaceAll('ş', 's')
+    .replaceAll('ü', 'u');
+}
 
   // Kitapları yüklerken filtreleme işlemi de yapılır
-  void _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
-    emit(BookLoading());
-    try {
-      final books = await bookRepository.getBooks();
-      final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor);  // Başlangıçta okunuyor kitaplar
-      emit(BookLoaded(books: books, filteredBooks: filteredBooks, filterStatus: ReadingStatus.okunuyor.toString()));
-    } catch (e) {
-      emit(BookError(message: "Kitaplar yüklenirken hata oluştu"));
-    }
+void _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
+  emit(BookLoading());
+  try {
+    final books = await bookRepository.getBooks();  // userId olmadan tüm kitapları getir
+    final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor);
+    emit(BookLoaded(books: books, filteredBooks: filteredBooks, filterStatus: ReadingStatus.okunuyor.toString()));
+  } catch (e) {
+    emit(BookError(message: "Kitaplar yüklenirken hata oluştu"));
   }
+}
+
 
   // Kitapları durumlarına göre filtreler
   void _onFilterBooks(FilterBooks event, Emitter<BookState> emit) {
@@ -133,6 +145,27 @@ void _onLoadReadingStats(ReadingStats event, Emitter<BookState> emit) async {
     emit(BookError(message: "İstatistikler yüklenirken hata oluştu: $e"));
   }
 }
+void _onSearchBooks(SearchBooks event, Emitter<BookState> emit) {
+  if (state is BookLoaded) {
+    final currentState = state as BookLoaded;
+    final query = event.query.toLowerCase();
+
+    final filteredBooks = currentState.books.where((book) {
+      final matchesStatus = currentState.filterStatus == ReadingStatus.tumKitaplar.name
+          ? true
+          : book.status.name == currentState.filterStatus;
+      final matchesQuery = book.title.toLowerCase().contains(query);
+      return matchesStatus && matchesQuery;
+    }).toList();
+
+    emit(BookLoaded(
+      books: currentState.books,
+      filteredBooks: filteredBooks,
+      filterStatus: currentState.filterStatus,
+    ));
+  }
+}
+
 
 
 }

@@ -58,22 +58,28 @@ class CategoryStatisticsPage extends StatelessWidget {
                     },
                   ),
                 ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      final index = value.toInt();
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          index < categories.length ? categories[index] : '',
-                          style: TextStyle(fontSize: 15),
-                        ),
-                      );
-                    },
-                    reservedSize: 80,
-                  ),
-                ),
+         bottomTitles: AxisTitles(
+  sideTitles: SideTitles(
+    showTitles: true,
+    getTitlesWidget: (value, meta) {
+      final index = value.toInt();
+      if (index < categories.length) {
+        return RotatedBox(
+          quarterTurns: 3, // 90 derece saat yönünün tersine döndür
+          child: Text(
+            categories[index],
+            style: TextStyle(fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+        );
+      } else {
+        return const SizedBox.shrink();
+      }
+    },
+    reservedSize: 80, // Dikey yazı için yeterli alan
+  ),
+),
+
                 rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),

@@ -1,4 +1,4 @@
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class BookState extends Equatable {

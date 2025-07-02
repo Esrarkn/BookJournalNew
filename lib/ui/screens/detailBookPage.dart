@@ -1,7 +1,7 @@
 import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:book_journal/ui/screens/bookFormPage.dart';
 import 'package:flutter/material.dart';
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 
 class BookDetailPage extends StatefulWidget {
   final Book book;
@@ -69,13 +69,13 @@ class _BookDetailPageState extends State<BookDetailPage> {
       child: _book.imageUrl.isNotEmpty
           ? Image.network(
               _book.imageUrl,
-              width: 120,
-              height: 180,
+              width: 150,
+              height: 220,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Image.asset(
                 'assets/images/book.png',
-                width: 120,
-                height: 180,
+                width: 150,
+                height: 220,
                 fit: BoxFit.cover,
               ),
             )
@@ -111,7 +111,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
             Text(
               _book.author.isNotEmpty ? _book.author : "Bilinmeyen Yazar",
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 fontStyle: FontStyle.italic,
                 color: Colors.grey[700],
               ),
@@ -121,7 +121,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
             Padding(
               padding: const EdgeInsets.all(4.0),
               child: Text(",", style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontStyle: FontStyle.italic,
                   color: Colors.grey[700],
                 ),),
@@ -129,8 +129,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
             Text(
               _book.category!.isNotEmpty ? _book.category! : "Bilinmeyen Kategori",
               style: TextStyle(
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
+                fontSize: 16,
                 color: Colors.grey[700],
               ),
               maxLines: 1,
@@ -158,7 +157,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
           _book.description.isNotEmpty
               ? _book.description
               : "Henüz tamamlanmadı.",
-          style: TextStyle(fontSize: 13, color: Colors.grey[800]),
+          style: TextStyle(fontSize: 15, color: Colors.grey[800]),
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),

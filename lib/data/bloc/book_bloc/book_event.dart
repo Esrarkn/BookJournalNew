@@ -1,4 +1,4 @@
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class BookEvent extends Equatable {
@@ -49,3 +49,9 @@ class FilterBooks extends BookEvent {
   List<Object> get props => [status];
 }
 class ReadingStats extends BookEvent{}
+class SearchBooks extends BookEvent {
+  final String query;
+
+  SearchBooks({required this.query});
+}
+

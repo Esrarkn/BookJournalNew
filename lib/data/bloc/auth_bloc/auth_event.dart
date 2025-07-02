@@ -3,13 +3,18 @@ abstract class AuthEvent {}
 class SignInEvent extends AuthEvent {
   final String email;
   final String password;
-  SignInEvent(this.email, this.password);
+
+  SignInEvent({required this.email, required this.password});
 }
 
 class SignUpEvent extends AuthEvent {
+  final String name;
   final String email;
   final String password;
-  SignUpEvent(this.email, this.password);
-}
 
-class SignOutEvent extends AuthEvent {}
+  SignUpEvent({
+    required this.name,
+    required this.email,
+    required this.password,
+  });
+}

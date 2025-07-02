@@ -1,5 +1,5 @@
 import 'package:book_journal/data/repository/bookRepository.dart';
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BookRepositoryImpl implements BookRepository {

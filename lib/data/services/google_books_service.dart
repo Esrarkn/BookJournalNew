@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:book_journal/ui/models/book_model.dart';
+import 'package:book_journal/ui/models/book.dart';
 
 class GoogleBooksService {
   final String baseUrl = 'https://www.googleapis.com/books/v1/volumes';
