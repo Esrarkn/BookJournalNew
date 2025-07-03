@@ -106,37 +106,40 @@ class _BookDetailPageState extends State<BookDetailPage> {
         const SizedBox(height: 8),
 
         // Yazar
-        Row(
-          children: [
-            Text(
-              _book.author.isNotEmpty ? _book.author : "Bilinmeyen Yazar",
-              style: TextStyle(
-                fontSize: 16,
-                fontStyle: FontStyle.italic,
-                color: Colors.grey[700],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Text(",", style: TextStyle(
-                  fontSize: 16,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey[700],
-                ),),
-            ),
-            Text(
-              _book.category!.isNotEmpty ? _book.category! : "Bilinmeyen Kategori",
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[700],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+Wrap(
+  spacing: 4, // öğeler arası boşluk
+  runSpacing: 4, // satırlar arası boşluk
+  children: [
+    Text(
+      _book.author.isNotEmpty ? _book.author : "Bilinmeyen Yazar",
+      style: TextStyle(
+        fontSize: 16,
+        fontStyle: FontStyle.italic,
+        color: Colors.grey[700],
+      ),
+      overflow: TextOverflow.ellipsis,
+    ),
+    Text(
+      ",",
+      style: TextStyle(
+        fontSize: 16,
+        fontStyle: FontStyle.italic,
+        color: Colors.grey[700],
+      ),
+    ),
+    Text(
+      _book.category != null && _book.category!.isNotEmpty
+          ? _book.category!
+          : "Bilinmeyen Kategori",
+      style: TextStyle(
+        fontSize: 16,
+        color: Colors.grey[700],
+      ),
+      overflow: TextOverflow.ellipsis,
+    ),
+  ],
+),
+
         const SizedBox(height: 12),
   const SizedBox(height: 12),
         // Başlangıç ve Bitiş Tarihleri

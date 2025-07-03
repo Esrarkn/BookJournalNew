@@ -1,11 +1,15 @@
+import 'package:book_journal/core/services/firebase_service.dart';
 import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_bloc.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_state.dart';
+import 'package:book_journal/data/services/firestore_service.dart';
+import 'package:book_journal/ui/models/book.dart';
 import 'package:book_journal/ui/models/user.dart';
 import 'package:book_journal/ui/screens/bookGoalsPage.dart';
 import 'package:book_journal/ui/screens/bookPage.dart';
 import 'package:book_journal/ui/screens/profilePage.dart';
 import 'package:book_journal/ui/screens/readingStatsPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -20,6 +24,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+   late final FirestoreService _firestoreService ;
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
@@ -27,6 +32,23 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
   }
+void testAddBook() async {
+  final testBook = Book(
+    id: '',
+    title: 'Test Book',
+    author: 'Test Author',
+    description: '',
+    imageUrl: '',
+    summary: '',
+    feelings: '',
+    quotes: '',
+    imagePath: '',
+    status: ReadingStatus.okunuyor,
+  );
+  await FirebaseService().addBook(testBook);
+}
+
+
 
   Map<String, int> getCategoryStats(BookLoaded state) {
     final books = state.books;
@@ -39,6 +61,13 @@ class _HomePageState extends State<HomePage> {
 
     return categoryStats;
   }
+@override
+void initState() {
+  super.initState();
+  testAddBook();
+
+  _firestoreService = FirestoreService(); 
+}
 
   @override
   Widget build(BuildContext context) {

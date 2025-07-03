@@ -7,11 +7,8 @@ import 'package:book_journal/ui/models/user.dart';
 import 'package:book_journal/ui/screens/bookFormPage.dart';
 import 'package:book_journal/ui/screens/homePage.dart';
 import 'package:book_journal/ui/screens/logInPage.dart';
-import 'package:book_journal/ui/screens/onBoardingPage.dart';
 import 'package:book_journal/ui/screens/profilePage.dart';
 import 'package:book_journal/ui/screens/splahScreen.dart';
-import 'package:book_journal/ui/screens/splashPage.dart';
-import 'package:book_journal/ui/widgets/onBoarding.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -82,7 +79,7 @@ class MyApp extends StatelessWidget {
             // Kullanıcı giriş yaptıysa HomePage, yapmadıysa LogInPage
             home: firebaseUser != null && appUser != null
                 ? HomePage(user: appUser)
-                : const LogInPage(),
+                : const SplashScreen(),
             routes: {
               '/login': (context) => const LogInPage(),
               '/addBook': (context) => BookFormPage(),
