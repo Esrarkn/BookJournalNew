@@ -26,6 +26,12 @@ class _BookPageState extends State<BookPage> {
     super.initState();
     context.read<BookBloc>().add(LoadBooks());
   }
+  @override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  context.read<BookBloc>().add(FetchBooks()); // <- Kitapları tekrar getir
+}
+
     @override
   void dispose() {
     _searchController.dispose();
@@ -59,18 +65,8 @@ Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 appBar: AppBar(
-  leading: _isSearching
-      ? null  // Arama açıkken soldaki menü kapansın
-      : IconButton(
-          onPressed: () {
-            // Menü işlemi
-          },
-          icon: Icon(
-            Icons.menu,
-            color: AppPallete.gradient1,
-            size: screenWidth * 0.07,
-          ),
-        ),
+  backgroundColor: Colors.transparent,
+  elevation: 0,
   title: _isSearching
       ? Container(
           width: screenWidth * 0.75, 
@@ -86,35 +82,34 @@ appBar: AppBar(
               color: Colors.white,
               fontSize: screenWidth * 0.045,
             ),
-decoration: InputDecoration(
-  hintText: 'Kitap ismi ara...',
-  hintStyle: TextStyle(color: AppPallete.gradient1),
-  border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(20),
-    borderSide: BorderSide(color: Colors.grey.shade600, width: 2),
-  ),
-  enabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(20),
-    borderSide: BorderSide(color: Colors.grey.shade600, width: 2),
-  ),
-  focusedBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(20),
-    borderSide: BorderSide(color: AppPallete.gradient1, width: 2),
-  ),
-  prefixIcon: Icon(Icons.search, color: AppPallete.gradient1),
-  suffixIcon: _searchController.text.isEmpty
-      ? null
-      : IconButton(
-          icon: Icon(Icons.clear, color: Colors.grey.shade600),
-          onPressed: () {
-            _searchController.clear();
-            context.read<BookBloc>().add(FilterBooks(status: _filterStatus));
-            setState(() {});
-          },
-        ),
-  contentPadding: EdgeInsets.symmetric(vertical: 8),
-),
-
+            decoration: InputDecoration(
+              hintText: 'Kitap ismi ara...',
+              hintStyle: TextStyle(color: AppPallete.gradient1),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: Colors.grey.shade600, width: 2),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: Colors.grey.shade600, width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: AppPallete.gradient1, width: 2),
+              ),
+              prefixIcon: Icon(Icons.search, color: AppPallete.gradient1),
+              suffixIcon: _searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: Icon(Icons.clear, color: Colors.grey.shade600),
+                      onPressed: () {
+                        _searchController.clear();
+                        context.read<BookBloc>().add(FilterBooks(status: _filterStatus));
+                        setState(() {});
+                      },
+                    ),
+              contentPadding: EdgeInsets.symmetric(vertical: 8),
+            ),
             onChanged: (query) {
               context.read<BookBloc>().add(SearchBooks(query: query));
               setState(() {});
@@ -130,27 +125,25 @@ decoration: InputDecoration(
           ),
         ),
   centerTitle: true,
-actions: [
-  IconButton(
-    onPressed: () {
-      setState(() {
-        if (_isSearching) {
-          _searchController.clear();
-          context.read<BookBloc>().add(FilterBooks(status: _filterStatus));
-        }
-        _isSearching = !_isSearching;
-      });
-    },
-    icon: Icon(
-      _isSearching ? Icons.close : Icons.search, 
-      color: AppPallete.gradient1,
-      size: screenWidth * 0.07,
+  actions: [
+    IconButton(
+      onPressed: () {
+        setState(() {
+          if (_isSearching) {
+            _searchController.clear();
+            context.read<BookBloc>().add(FilterBooks(status: _filterStatus));
+          }
+          _isSearching = !_isSearching;
+        });
+      },
+      icon: Icon(
+        _isSearching ? Icons.close : Icons.search, 
+        color: AppPallete.gradient1,
+        size: screenWidth * 0.07,
+      ),
     ),
-  ),
-],
-
+  ],
 ),
-
 
     body: BlocListener<BookBloc, BookState>(
       listener: (context, state) {

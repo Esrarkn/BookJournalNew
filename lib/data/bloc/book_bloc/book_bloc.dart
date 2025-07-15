@@ -44,19 +44,19 @@ void _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
   }
 }
 
-
   // Kitapları durumlarına göre filtreler
-  void _onFilterBooks(FilterBooks event, Emitter<BookState> emit) {
-    if (state is BookLoaded) {
-      final currentState = state as BookLoaded;
-      final filteredBooks = _filterBooks(currentState.books, event.status);
-      emit(BookLoaded(
-        books: currentState.books,
-        filteredBooks: filteredBooks,
-        filterStatus: event.status.name,
-      ));
-    }
+void _onFilterBooks(FilterBooks event, Emitter<BookState> emit) {
+  if (state is BookLoaded) {
+    final currentState = state as BookLoaded;
+    final filteredBooks = _filterBooks(currentState.books, event.status);
+    emit(BookLoaded(
+      books: currentState.books,
+      filteredBooks: filteredBooks,
+      filterStatus: event.status.name,
+    ));
   }
+}
+
 List<Book> _filterBooks(List<Book> books, ReadingStatus status) {
   switch (status) {
     case ReadingStatus.okunuyor:
@@ -84,7 +84,8 @@ List<Book> _filterBooks(List<Book> books, ReadingStatus status) {
     emit(BookLoading());
     try {
       final books = await _googleBooksService.fetchBooksFromGoogle(event.query);
-      final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor);  // Başlangıçta okunuyor kitaplar
+      final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor); 
+       // Başlangıçta okunuyor kitaplar
       emit(BookLoaded(books: books, filteredBooks: filteredBooks, filterStatus: ReadingStatus.okunuyor.toString()));
     } catch (e) {
       emit(BookError(message: "Google kitapları alınamadı: $e"));
@@ -118,8 +119,8 @@ List<Book> _filterBooks(List<Book> books, ReadingStatus status) {
   void _onFetchBooks(FetchBooks event, Emitter<BookState> emit) async {
     try {
       final books = await bookRepository.getBooks();
-      final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor);  // Başlangıçta okunuyor kitaplar
-      emit(BookLoaded(books: books, filteredBooks: filteredBooks, filterStatus: ReadingStatus.okunuyor.toString()));
+      final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor);
+      emit(BookLoaded(books: books, filteredBooks:  filteredBooks, filterStatus: ReadingStatus.okunuyor.toString()));
     } catch (e) {
       emit(BookError(message: "Kitaplar yüklenirken hata oluştu"));
     }
@@ -158,6 +159,7 @@ void _onSearchBooks(SearchBooks event, Emitter<BookState> emit) {
       return matchesStatus && matchesQuery;
     }).toList();
 
+
     emit(BookLoaded(
       books: currentState.books,
       filteredBooks: filteredBooks,
@@ -165,6 +167,7 @@ void _onSearchBooks(SearchBooks event, Emitter<BookState> emit) {
     ));
   }
 }
+
 
 
 

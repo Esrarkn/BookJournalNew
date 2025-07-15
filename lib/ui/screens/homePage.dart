@@ -32,22 +32,6 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
   }
-void testAddBook() async {
-  final testBook = Book(
-    id: '',
-    title: 'Test Book',
-    author: 'Test Author',
-    description: '',
-    imageUrl: '',
-    summary: '',
-    feelings: '',
-    quotes: '',
-    imagePath: '',
-    status: ReadingStatus.okunuyor,
-  );
-  await FirebaseService().addBook(testBook);
-}
-
 
 
   Map<String, int> getCategoryStats(BookLoaded state) {
@@ -64,7 +48,6 @@ void testAddBook() async {
 @override
 void initState() {
   super.initState();
-  testAddBook();
 
   _firestoreService = FirestoreService(); 
 }
@@ -99,22 +82,22 @@ void initState() {
         indicatorColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
         destinations: [
           NavigationDestination(
-            icon: Icon(LucideIcons.bookOpen, color: AppPallete.gradient1),
+            icon: Icon(LucideIcons.bookOpen, color: AppPallete.gradient2),
             selectedIcon: Icon(LucideIcons.bookOpenCheck),
             label: 'Kitaplar',
           ),
           NavigationDestination(
-            icon: Icon(LucideIcons.barChart3, color: AppPallete.gradient1),
+            icon: Icon(LucideIcons.barChart3, color: AppPallete.gradient2),
             selectedIcon: Icon(LucideIcons.barChartBig),
             label: 'İstatistik',
           ),
           NavigationDestination(
-            icon: Icon(LucideIcons.target, color: AppPallete.gradient1),
+            icon: Icon(LucideIcons.target, color: AppPallete.gradient2),
             selectedIcon: Icon(LucideIcons.target),
             label: 'Hedefler',
           ),
           NavigationDestination(
-            icon: Icon(LucideIcons.user, color: AppPallete.gradient1),
+            icon: Icon(LucideIcons.user, color: AppPallete.gradient2),
             selectedIcon: Icon(LucideIcons.userCheck),
             label: 'Profil',
           ),

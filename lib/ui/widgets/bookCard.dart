@@ -118,13 +118,13 @@ class BookCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       // Açıklama
                       Text(
                         book.description.isNotEmpty
                             ? book.description
                             : "Henüz Tamamlanmadı.",
-                        style: TextStyle(fontSize: 15, color: Colors.grey[800]),
+                        style: TextStyle(fontSize: 15, color: Colors.grey[700]),
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),

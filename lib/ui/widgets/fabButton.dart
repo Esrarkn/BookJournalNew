@@ -11,13 +11,18 @@ class Fabbutton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
-      onPressed: () {
-        context.read<BookBloc>().add(FetchBooks()); // 📌 Kitapları getir
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => BookFormPage()),
-        );
-      },
+    onPressed: () async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => BookFormPage()),
+  );
+
+  // Kullanıcı kitap eklediyse anasayfayı yenile
+  if (result != null) {
+    context.read<BookBloc>().add(FetchBooks());
+  }
+}
+,
       backgroundColor: AppPallete.gradient1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Icon(Icons.add, size: 30, color: AppPallete.gradient3),

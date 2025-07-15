@@ -6,6 +6,7 @@ import 'package:book_journal/data/bloc/book_bloc/book_bloc.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_event.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_state.dart';
 import 'package:book_journal/ui/models/book.dart';
+import 'package:book_journal/ui/widgets/book_image.dart';
 import 'package:book_journal/ui/widgets/categorySelector.dart';
 import 'package:book_journal/ui/widgets/imageButton.dart';
 import 'package:book_journal/ui/widgets/saveButton.dart';
@@ -166,6 +167,36 @@ class _BookFormPageState extends State<BookFormPage> {
         ? context.read<BookBloc>().add(AddBook(book))
         : context.read<BookBloc>().add(UpdateBook(book));
   }
+  
+void _showImageSourceDialog() {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Text("Fotoğraf Seç"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Icon(Icons.camera_alt, color: AppPallete.gradient1),
+            title: Text("Fotoğraf Çek"),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.photo_library, color: AppPallete.gradient1),
+            title: Text("Galeriden Seç"),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildTextField(TextEditingController controller, String label, {int maxLines = 1}) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -188,39 +219,6 @@ class _BookFormPageState extends State<BookFormPage> {
     );
   }
 
-Widget _buildBookImageWidget() {
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
-  final double imageWidth = screenWidth * 0.3;
-  final double imageHeight = screenHeight * 0.22;
-
-  return Container(
-    width: imageWidth,
-    height: imageHeight,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: AppPallete.gradient3,  // İstediğin çerçeve rengi
-        width: 2,
-      ),
-      color: _bookImage == null || _bookImage!.isEmpty
-          ? Colors.grey.shade200  // Görsel yoksa arka plan rengi
-          : null,
-    ),
-    clipBehavior: Clip.hardEdge,
-    child: _bookImage == null || _bookImage!.isEmpty
-        ? Center(
-            child: Icon(
-              Icons.add_photo_alternate_outlined,
-              size: 60,
-              color: Colors.grey.shade400,
-            ),
-          )
-        : _bookImage!.startsWith('http')
-            ? Image.network(_bookImage!, fit: BoxFit.cover)
-            : Image.file(File(_bookImage!), fit: BoxFit.cover),
-  );
-}
 
 
   Widget _buildSearchSuggestions(BookState state) {
@@ -318,7 +316,19 @@ Widget _buildBookImageWidget() {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(16), child: _buildBookImageWidget()),
+                    GestureDetector(
+  onTap: _showImageSourceDialog,
+  child: Container(
+    width: 120,
+    height: 180,
+    child: buildBookImage(_bookImage != null && _bookImage!.startsWith('http') ? _bookImage : null,
+                        _bookImage != null && !_bookImage!.startsWith('http') ? _bookImage : null,),
+  ),
+
+
+                      ),
+                  
+                    
                     SizedBox(width: screenWidth * 0.04),
                     Expanded(
                       child: Column(
@@ -331,52 +341,128 @@ Widget _buildBookImageWidget() {
                           SizedBox(height: 5),
                           Text(
                             _authorController.text.isNotEmpty ? _authorController.text : "Yazar",
-                            style: TextStyle(fontSize: screenWidth * 0.035, color: AppPallete.gradient2),
+                            style: TextStyle(fontSize: screenWidth * 0.03, color: AppPallete.gradient2),
                           ),
                           SizedBox(height: screenHeight * 0.01),
-                          CategorySelector(
-                            existingCategories: defaultCategories,
-                            onCategorySelected: (category) => setState(() => _selectedCategory = category),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextButton.icon(
-                                  onPressed: () => _selectDate(true),
-                                  icon: Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.05),
-                                  label: Text(
-                                    _startDate != null ? "Başlangıç: ${_startDate!.day}.${_startDate!.month}.${_startDate!.year}" : "Başlangıç Tarihi",
-                                    style: TextStyle(color: AppPallete.gradient1, fontSize: screenWidth * 0.035),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 5),
-                              Expanded(
-                                child: TextButton.icon(
-                                  onPressed: () => _selectDate(false),
-                                  icon: Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.05),
-                                  label: Text(
-                                    _endDate != null ? "Bitiş: ${_endDate!.day}.${_endDate!.month}.${_endDate!.year}" : "Bitiş Tarihi",
-                                    style: TextStyle(color: AppPallete.gradient1, fontSize: screenWidth * 0.035),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                   Row(
+                       SizedBox(
+  width: screenWidth * 0.4 < 100 ? 100 : screenWidth * 0.6,
+  child: CategorySelector(
+    existingCategories: defaultCategories,
+    onCategorySelected: (category) => setState(() => _selectedCategory = category),
+  ),
+),
+
+                        Row(
   children: [
     Expanded(
-      child: Wrap(
-        spacing: 5,
-        runSpacing: 5,
-        children: [
-          modernImageButton(icon: Icons.camera_alt, label: "Fotoğraf Çek", onPressed: () => _pickImage(ImageSource.camera)),
-          modernImageButton(icon: Icons.photo_library, label: "Galeriden Seç", onPressed: () => _pickImage(ImageSource.gallery)),
-        ],
+      child: TextButton(
+        onPressed: () => _selectDate(true),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        ),
+        child: _startDate == null
+            ? Row(
+                children: [
+                  Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.04),
+                  SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      "Başlangıç Tarihi",
+                      style: TextStyle(
+                        color: AppPallete.gradient1,
+                        fontSize: screenWidth * 0.034,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.035),
+                      SizedBox(width: 4),
+                      Text(
+                        "Başlangıç",
+                        style: TextStyle(
+                          color: AppPallete.gradient1,
+                          fontSize: screenWidth * 0.028,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "${_startDate!.day}.${_startDate!.month}.${_startDate!.year}",
+                    style: TextStyle(
+                      color: AppPallete.gradient1,
+                      fontSize: screenWidth * 0.032,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    ),
+    SizedBox(width: 8),
+    Expanded(
+      child: TextButton(
+        onPressed: () => _selectDate(false),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        ),
+        child: _endDate == null
+            ? Row(
+                children: [
+                  Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.04),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      "Bitiş Tarihi",
+                      style: TextStyle(
+                        color: AppPallete.gradient1,
+                        fontSize: screenWidth * 0.034,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.035),
+                      SizedBox(width: 6),
+                      Text(
+                        "Bitiş",
+                        style: TextStyle(
+                          color: AppPallete.gradient1,
+                          fontSize: screenWidth * 0.028,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "${_endDate!.day}.${_endDate!.month}.${_endDate!.year}",
+                    style: TextStyle(
+                      color: AppPallete.gradient1,
+                      fontSize: screenWidth * 0.032,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
       ),
     ),
   ],
 ),
+
+                   
 
                         ],
                       ),
@@ -390,6 +476,7 @@ Widget _buildBookImageWidget() {
                 SizedBox(height: screenHeight * 0.02),
                 modernSaveButton(widget.book == null ? "Kitap Ekle" : "Kitap Güncelle", _saveBook),
               ],
+
             ),
           ),
         ),

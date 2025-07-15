@@ -1,5 +1,6 @@
 import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:book_journal/ui/screens/bookFormPage.dart';
+import 'package:book_journal/ui/widgets/book_image.dart';
 import 'package:flutter/material.dart';
 import 'package:book_journal/ui/models/book.dart';
 
@@ -52,41 +53,20 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
-  Widget _buildBookHeader() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildBookImage(),
-        const SizedBox(width: 16),
-        Expanded(child: _buildBookInfo()),
-      ],
-    );
-  }
+Widget _buildBookHeader() {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      buildBookImage(
+        _book.imageUrl.isNotEmpty ? _book.imageUrl : null,
+        _book.imagePath.isNotEmpty ? _book.imagePath : null,
+      ),
+      const SizedBox(width: 16),
+      Expanded(child: _buildBookInfo()),
+    ],
+  );
+}
 
-  Widget _buildBookImage() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: _book.imageUrl.isNotEmpty
-          ? Image.network(
-              _book.imageUrl,
-              width: 150,
-              height: 220,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Image.asset(
-                'assets/images/book.png',
-                width: 150,
-                height: 220,
-                fit: BoxFit.cover,
-              ),
-            )
-          : Image.asset(
-              'assets/images/book.png',
-              width: 120,
-              height: 180,
-              fit: BoxFit.cover,
-            ),
-    );
-  }
 
   Widget _buildBookInfo() {
     return Column(
@@ -105,7 +85,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
         ),
         const SizedBox(height: 8),
 
-        // Yazar
 Wrap(
   spacing: 4, // öğeler arası boşluk
   runSpacing: 4, // satırlar arası boşluk
@@ -115,7 +94,7 @@ Wrap(
       style: TextStyle(
         fontSize: 16,
         fontStyle: FontStyle.italic,
-        color: Colors.grey[700],
+        color: AppPallete.gradient1,
       ),
       overflow: TextOverflow.ellipsis,
     ),
@@ -124,7 +103,7 @@ Wrap(
       style: TextStyle(
         fontSize: 16,
         fontStyle: FontStyle.italic,
-        color: Colors.grey[700],
+        color: AppPallete.gradient1,
       ),
     ),
     Text(
@@ -133,7 +112,7 @@ Wrap(
           : "Bilinmeyen Kategori",
       style: TextStyle(
         fontSize: 16,
-        color: Colors.grey[700],
+        color: AppPallete.gradient1,
       ),
       overflow: TextOverflow.ellipsis,
     ),
@@ -160,7 +139,7 @@ Wrap(
           _book.description.isNotEmpty
               ? _book.description
               : "Henüz tamamlanmadı.",
-          style: TextStyle(fontSize: 15, color: Colors.grey[800]),
+          style: TextStyle(fontSize: 15, color: Colors.grey[700]),
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
@@ -173,11 +152,11 @@ Wrap(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+          Icon(Icons.calendar_today, size: 14, color: AppPallete.gradient1),
           const SizedBox(width: 6),
           Text(
             "$label $date",
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 13, color: AppPallete.gradient1),
           ),
         ],
       ),

@@ -1,31 +1,56 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../../ui/models/bookGoal.dart';
+
 class GoalRepository {
-  // Bu örnekte yerel veri depolama kullanılıyor
-  Future<void> addGoal(int targetBooks, DateTime targetDate) async {
-    // Veritabanına ekleme işlemi
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> updateGoal(BookGoal goal) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('Kullanıcı giriş yapmamış');
+
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('goals')
+        .doc('currentGoal')
+        .set(goal.toMap());
   }
 
-  Future<void> updateGoal(int targetBooks, DateTime targetDate) async {
-    // Veritabanında güncelleme işlemi
+  Future<BookGoal> loadGoal() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('Kullanıcı giriş yapmamış');
+
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('goals')
+        .doc('currentGoal')
+        .get();
+
+    if (snapshot.exists) {
+      return BookGoal.fromMap(snapshot.data()!);
+    } else {
+      return BookGoal(
+        monthlyGoal: 0,
+        yearlyGoal: 0,
+        monthlyProgress: 0,
+        yearlyProgress: 0,
+      );
+    }
   }
 
   Future<void> deleteGoal() async {
-    // Hedef verisini silme işlemi
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('Kullanıcı giriş yapmamış');
+
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('goals')
+        .doc('currentGoal')
+        .delete();
   }
-
-  Future<Goal> loadGoal() async {
-    // Hedefi veritabanından çekme
-    return Goal(targetBooks: 10, targetDate: DateTime.now().add(Duration(days: 30)), completedBooks: 5);
-  }
-}
-
-class Goal {
-  final int targetBooks;
-  final DateTime targetDate;
-  final int completedBooks;
-
-  Goal({
-    required this.targetBooks,
-    required this.targetDate,
-    required this.completedBooks,
-  });
 }

@@ -5,23 +5,36 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class BookRepositoryImpl implements BookRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  @override
-  Future<void> addBook(Book book) async {
-    DocumentReference docRef = await _firestore
-        .collection('books')
-        .add(book.toMap());
-    await docRef.update({'id': docRef.id});
+@override
+Future<void> addBook(Book book) async {
+  final docRef = await _firestore.collection('books').add({
+    ...book.toMap(),
+    'createdAt': FieldValue.serverTimestamp(), // ✅ EKLENDİ
+  });
+  await docRef.update({'id': docRef.id});
+}
+@override
+Future<List<Book>> getBooks() async {
+  final querySnapshot = await _firestore
+      .collection('books')
+      .orderBy('createdAt', descending: true)
+      .get();
+
+  final books = querySnapshot.docs.map((doc) {
+    final data = doc.data();
+    data['id'] = doc.id;
+    return Book.fromMap(data);
+  }).toList();
+
+  // 🔍 Burada createdAt değerlerini konsola yazdıralım:
+  for (var book in books) {
+    print('Kitap: ${book.title} - CreatedAt: ${book.createdAt}');
   }
 
-  @override
-  Future<List<Book>> getBooks() async {
-    final querySnapshot = await _firestore.collection('books').get();
-    return querySnapshot.docs.map((doc) {
-      final data = doc.data();
-      data['id'] = doc.id; // Firestore ID ekleniyor
-      return Book.fromMap(data);
-    }).toList();
-  }
+  return books;
+}
+
+
 
   @override
   Future<List<Book>> searchBooks(String query) async {

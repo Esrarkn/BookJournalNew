@@ -44,6 +44,7 @@ class Book {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? category;
+  final DateTime? createdAt;
 
   Book({
     required this.id,
@@ -59,6 +60,7 @@ class Book {
     this.startDate,
     this.endDate,
     this.category,
+    this.createdAt,
   });
 
   Book copyWith({
@@ -75,6 +77,7 @@ class Book {
     DateTime? startDate,
     DateTime? endDate,
     String? category,
+    DateTime? createdAt
   }) {
     return Book(
       id: id ?? this.id,
@@ -90,6 +93,7 @@ class Book {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       category: category ?? this.category,
+      createdAt: createdAt ?? this.createdAt
     );
   }
 
@@ -126,6 +130,7 @@ class Book {
       startDate: map['startDate'] != null ? DateTime.tryParse(map['startDate']) : null,
       endDate: map['endDate'] != null ? DateTime.tryParse(map['endDate']) : null,
       category: map["category"],
+      createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt']) : null, 
     );
   }
 
@@ -144,6 +149,7 @@ class Book {
       'startDate': startDate?.toIso8601String(),
       'endDate': endDate?.toIso8601String(),
       "category" : category,
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 } 

@@ -29,13 +29,14 @@ class _CategorySelectorState extends State<CategorySelector> {
 
     return  ConstrainedBox(
   constraints: BoxConstraints(
-    maxHeight: 300, // İhtiyaca göre ayarlanabilir
+    maxHeight: 200, 
   ),
   child: SingleChildScrollView(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButtonFormField<String>(
+          isExpanded: true,
           isDense: true,
           dropdownColor: AppPallete.backgroundColor,
           value: selectedCategory,
@@ -62,7 +63,7 @@ class _CategorySelectorState extends State<CategorySelector> {
           },
           decoration: InputDecoration(
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             border: OutlineInputBorder(),
           ),
         ),
@@ -92,7 +93,7 @@ class _CategorySelectorState extends State<CategorySelector> {
             },
             child: Text('Kaydet'),
             style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20),
               textStyle: TextStyle(fontSize: 14),
               backgroundColor: AppPallete.gradient2,
             ),

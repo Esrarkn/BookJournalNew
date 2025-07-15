@@ -8,7 +8,7 @@ static _border([Color color = AppPallete.borderColor]) => OutlineInputBorder(
 borderSide: BorderSide(color: color, width: 3),
 borderRadius: BorderRadius.circular(10),
 );
-static final darkThemeMode = ThemeData.dark().copyWith(
+static final lightThemeMode = ThemeData.dark().copyWith(
 scaffoldBackgroundColor: AppPallete.backgroundColor,
 bottomNavigationBarTheme: BottomNavigationBarThemeData(
 backgroundColor: AppPallete.backgroundColor
@@ -39,14 +39,48 @@ errorBorder: _border(AppPallete.errorColor),
       ),
  ),
 );
-static final lightTheme = ThemeData.light().copyWith(
-scaffoldBackgroundColor: AppPallete.backgroundColor, // Genel arka plan
-bottomNavigationBarTheme: BottomNavigationBarThemeData(
-backgroundColor: AppPallete.backgroundColor, // Bottom Navigation'ın arka planı
-selectedItemColor: AppPallete.gradient1, // Seçili öğe rengi
-unselectedItemColor: AppPallete.greyColor, // Seçilmeyen öğe rengi
-),
-);
+  static _borderDark([Color color = AppDarkPallete.borderColor]) =>
+      OutlineInputBorder(
+        borderSide: BorderSide(color: color, width: 3),
+        borderRadius: BorderRadius.circular(10),
+      );
+
+  static final darkTheme = ThemeData.dark().copyWith(
+    scaffoldBackgroundColor: AppDarkPallete.backgroundColor,
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: AppDarkPallete.backgroundColor,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppDarkPallete.backgroundColor,
+      iconTheme: IconThemeData(color: AppDarkPallete.gradient3),
+      titleTextStyle: TextStyle(color: AppDarkPallete.textPrimary, fontSize: 20),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: AppDarkPallete.backgroundColor,
+      side: BorderSide.none,
+      labelStyle: TextStyle(color: AppDarkPallete.textPrimary),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      contentPadding: EdgeInsets.all(27),
+      border: _borderDark(),
+      enabledBorder: _borderDark(),
+      focusedBorder: _borderDark(AppDarkPallete.gradient2),
+      errorBorder: _borderDark(AppDarkPallete.gradient3), // errorColor yoksa
+      hintStyle: TextStyle(color: AppDarkPallete.textSecondary),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: AppDarkPallete.backgroundColor,
+      indicatorColor: AppDarkPallete.gradient1.withOpacity(0.2),
+      iconTheme: MaterialStateProperty.resolveWith<IconThemeData>(
+        (states) => IconThemeData(
+          color: states.contains(MaterialState.selected)
+              ? AppDarkPallete.gradient3
+              : AppDarkPallete.gradient1,
+        ),
+      ),
+    ),
+  );
 }
 
 
