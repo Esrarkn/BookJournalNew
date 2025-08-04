@@ -106,34 +106,29 @@ class GoalBloc extends Bloc<GoalEvent, GoalState> {
     }
   }
 
-  Future<void> _onUpdateProgressLocal(UpdateProgressLocal event, Emitter<GoalState> emit) async {
-    if (state is GoalLoadSuccess) {
-      final currentGoal = (state as GoalLoadSuccess).bookGoal;
-      BookGoal updatedGoal;
+Future<void> _onUpdateProgressLocal(UpdateProgressLocal event, Emitter<GoalState> emit) async {
+  if (state is GoalLoadSuccess) {
+    final currentGoal = (state as GoalLoadSuccess).bookGoal;
 
-      if (event.isMonthly) {
-        int newMonthlyProgress = event.progress;
-        int newYearlyProgress = currentGoal.yearlyProgress < newMonthlyProgress
-            ? newMonthlyProgress
-            : currentGoal.yearlyProgress;
+    final updatedGoal = currentGoal.copyWith(
+      monthlyProgress: event.monthlyProgress,
+      yearlyProgress: event.yearlyProgress,
+    );
 
-        updatedGoal = currentGoal.copyWith(
-          monthlyProgress: newMonthlyProgress,
-          yearlyProgress: newYearlyProgress,
-        );
-      } else {
-        updatedGoal = currentGoal.copyWith(yearlyProgress: event.progress);
+    emit(GoalLoadSuccess(updatedGoal));
+
+    try {
+      if (_userId.isNotEmpty) {
+        await _firestore.collection('goals').doc(_userId).update({
+          'monthlyProgress': updatedGoal.monthlyProgress,
+          'yearlyProgress': updatedGoal.yearlyProgress,
+          'updatedAt': DateTime.now(),
+        });
       }
-
-      emit(GoalLoadSuccess(updatedGoal));
-
-      try {
-        if (_userId.isNotEmpty) {
-          await _firestore.collection('goals').doc(_userId).update(updatedGoal.toMap());
-        }
-      } catch (_) {
-        // Hata yönetimi opsiyonel
-      }
+    } catch (_) {
+      // Hata yönetimi opsiyonel
     }
   }
+}
+
 }

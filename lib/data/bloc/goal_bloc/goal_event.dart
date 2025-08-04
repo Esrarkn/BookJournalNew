@@ -28,8 +28,14 @@ class UpdateProgress extends GoalEvent {
   UpdateProgress({required this.isMonthly, required this.progress});
 }
 class UpdateProgressLocal extends GoalEvent {
-  final bool isMonthly;
-  final int progress;
+  final int monthlyProgress;
+  final int yearlyProgress;
 
-  UpdateProgressLocal({required this.isMonthly, required this.progress});
+  UpdateProgressLocal({
+    required this.monthlyProgress,
+    required this.yearlyProgress,
+  });
+
+  @override
+  List<Object?> get props => [monthlyProgress, yearlyProgress];
 }

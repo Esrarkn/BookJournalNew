@@ -29,4 +29,3 @@ class GoalFailure extends GoalState {
   final String message;
   GoalFailure(this.message);
 }
-

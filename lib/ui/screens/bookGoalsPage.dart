@@ -61,45 +61,55 @@ class _BookGoalsPageState extends State<BookGoalsPage> {
     _goalBloc.add(UpdateGoal(updatedGoal));
   }
 
-  void _updateProgress(bool isMonthly, int index, BookGoal currentGoal) {
-    int newProgress =
-        (index <
-                (isMonthly
-                    ? currentGoal.monthlyProgress
-                    : currentGoal.yearlyProgress))
-            ? index
-            : index + 1;
+void _updateProgress(bool isMonthly, int index, BookGoal currentGoal) {
+  int newProgress = (index < (isMonthly ? currentGoal.monthlyProgress : currentGoal.yearlyProgress))
+      ? index
+      : index + 1;
 
-    if (isMonthly && newProgress > currentGoal.monthlyGoal) {
+  if (isMonthly && newProgress > currentGoal.monthlyGoal) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Aylık ilerleme aylık hedefi aşamaz!')),
+    );
+    return;
+  }
+  if (!isMonthly) {
+    if (newProgress > currentGoal.yearlyGoal) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aylık ilerleme aylık hedefi aşamaz!')),
+        const SnackBar(content: Text('Yıllık ilerleme yıllık hedefi aşamaz!')),
       );
       return;
     }
-    if (!isMonthly) {
-      if (newProgress > currentGoal.yearlyGoal) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Yıllık ilerleme yıllık hedefi aşamaz!'),
-          ),
-        );
-        return;
-      }
-      if (newProgress < currentGoal.monthlyProgress) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Yıllık ilerleme aylık ilerlemeden küçük olamaz!'),
-          ),
-        );
-        return;
-      }
+    if (newProgress < currentGoal.monthlyProgress) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Yıllık ilerleme aylık ilerlemeden küçük olamaz!')),
+      );
+      return;
     }
-
-    // Local state'i güncellemek için event gönder
-    _goalBloc.add(
-      UpdateProgressLocal(isMonthly: isMonthly, progress: newProgress),
-    );
   }
+
+  int updatedMonthlyProgress = currentGoal.monthlyProgress;
+  int updatedYearlyProgress = currentGoal.yearlyProgress;
+
+  if (isMonthly) {
+    updatedMonthlyProgress = newProgress;
+    if (updatedYearlyProgress < updatedMonthlyProgress) {
+      updatedYearlyProgress = updatedMonthlyProgress;
+    }
+  } else {
+    updatedYearlyProgress = newProgress;
+    if (updatedYearlyProgress < updatedMonthlyProgress) {
+      updatedMonthlyProgress = updatedYearlyProgress;
+    }
+  }
+
+  _goalBloc.add(
+    UpdateProgressLocal(
+      monthlyProgress: updatedMonthlyProgress,
+      yearlyProgress: updatedYearlyProgress,
+    ),
+  );
+}
+
 
   List<Widget> _buildProgressBoxes(
     BookGoal currentGoal,
