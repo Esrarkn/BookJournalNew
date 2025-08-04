@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum ReadingStatus {
   okunuyor,
   okundu,
@@ -115,41 +117,52 @@ class Book {
     );
   }
 
-  factory Book.fromMap(Map<String, dynamic> map) {
-    return Book(
-      id: map['id'] ?? '',
-      title: map['title'] ?? '',
-      author: map['author'] ?? '',
-      description: map['description'] ?? '',
-      imageUrl: map['imageUrl'] ?? '',
-      summary: map['summary'] ?? '',
-      feelings: map['feelings'] ?? '',
-      quotes: map['quotes'] ?? '',
-      imagePath: map['imagePath'] ?? '',
-      status: ReadingStatusExtension.fromString(map['status'] ?? 'okunuyor'),
-      startDate: map['startDate'] != null ? DateTime.tryParse(map['startDate']) : null,
-      endDate: map['endDate'] != null ? DateTime.tryParse(map['endDate']) : null,
-      category: map["category"],
-      createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt']) : null, 
-    );
-  }
+factory Book.fromMap(Map<String, dynamic> map) {
+  return Book(
+    id: map['id'] ?? '',
+    title: map['title'] ?? '',
+    author: map['author'] ?? '',
+    description: map['description'] ?? '',
+    imageUrl: map['imageUrl'] ?? '',
+    summary: map['summary'] ?? '',
+    feelings: map['feelings'] ?? '',
+    quotes: map['quotes'] ?? '',
+    imagePath: map['imagePath'] ?? '',
+    status: ReadingStatusExtension.fromString(map['status'] ?? 'okunuyor'),
+    startDate: map['startDate'] != null ? DateTime.tryParse(map['startDate']) : null,
+    endDate: map['endDate'] != null ? DateTime.tryParse(map['endDate']) : null,
+    category: map["category"],
+    createdAt: map['createdAt'] != null ? (map['createdAt'] as Timestamp).toDate() : null,
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'title': title,
-      'author': author,
-      'description': description,
-      'imageUrl': imageUrl,
-      'summary': summary,
-      'feelings': feelings,
-      'quotes': quotes,
-      'imagePath': imagePath,
-      'status': status.stringValue,
-      'startDate': startDate?.toIso8601String(),
-      'endDate': endDate?.toIso8601String(),
-      "category" : category,
-      'createdAt': createdAt?.toIso8601String(),
-    };
-  }
+
+  );
+}
+Map<String, dynamic> toMap({bool includeTimestamp = true}) {
+    final Map<String, dynamic> map = {
+    'id': id,
+    'title': title,
+    'author': author,
+    'description': description,
+    'imageUrl': imageUrl,
+    'summary': summary,
+    'feelings': feelings,
+    'quotes': quotes,
+    'imagePath': imagePath,
+    'status': status.stringValue,
+    'startDate': startDate?.toIso8601String(),
+    'endDate': endDate?.toIso8601String(),
+    'category': category,
+  };
+
+    if (includeTimestamp) {
+      map['createdAt'] = FieldValue.serverTimestamp(); 
+    }
+
+
+  return map;
+}
+
+
+
+
 } 

@@ -1,4 +1,3 @@
-import 'package:book_journal/core/services/firebase_service.dart';
 import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_bloc.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_state.dart';

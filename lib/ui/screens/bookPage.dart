@@ -1,6 +1,7 @@
 import 'package:book_journal/ui/screens/readingStatsPage.dart';
 import 'package:book_journal/ui/widgets/bookCard.dart';
 import 'package:book_journal/ui/widgets/fabButton.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:book_journal/core/theme.dart/appPalette.dart';
@@ -56,6 +57,9 @@ void didChangeDependencies() {
         return ReadingStatus.tumKitaplar;
     }
   }
+  
+
+
 @override
 Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
@@ -64,7 +68,7 @@ Widget build(BuildContext context) {
 
   return Scaffold(
     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-appBar: AppBar(
+  appBar: AppBar(
   backgroundColor: Colors.transparent,
   elevation: 0,
   title: _isSearching
@@ -143,8 +147,8 @@ appBar: AppBar(
       ),
     ),
   ],
-),
-
+  ),
+  
     body: BlocListener<BookBloc, BookState>(
       listener: (context, state) {
         if (state is BookLoaded && !_isSearching) {
@@ -229,6 +233,7 @@ appBar: AppBar(
       ),
     ),
     floatingActionButton: Fabbutton(),
+    
   );
 }
 

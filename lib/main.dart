@@ -5,7 +5,6 @@ import 'package:book_journal/data/bloc/goal_bloc/goal_event.dart';
 import 'package:book_journal/data/repository/firebaseBookRepository.dart';
 import 'package:book_journal/ui/models/user.dart';
 import 'package:book_journal/ui/screens/bookFormPage.dart';
-import 'package:book_journal/ui/screens/demo.dart';
 import 'package:book_journal/ui/screens/homePage.dart';
 import 'package:book_journal/ui/screens/logInPage.dart';
 import 'package:book_journal/ui/screens/profilePage.dart';
@@ -19,43 +18,39 @@ import 'package:book_journal/core/theme.dart/theme.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart'; 
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-
 import 'firebase_options.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   runApp(const MyApp());
 }
-final firebaseUser = FirebaseAuth.instance.currentUser!;
-final appUser = AppUser(
-  id: firebaseUser.uid,
-  email: firebaseUser.email ?? '',
-  name: firebaseUser.displayName,
-);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+
+    AppUser? appUser;
+    if (firebaseUser != null) {
+      appUser = AppUser(
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        name: firebaseUser.displayName,
+      );
+    }
+
     return ScreenUtilInit(
       designSize: const Size(390, 844),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        final firebaseUser = FirebaseAuth.instance.currentUser;
-
-        AppUser? appUser;
-        if (firebaseUser != null) {
-          appUser = AppUser(
-            id: firebaseUser.uid,
-            email: firebaseUser.email ?? '',
-            name: firebaseUser.displayName,
-          );
-        }
-
         return MultiBlocProvider(
           providers: [
             BlocProvider(
@@ -76,19 +71,18 @@ class MyApp extends StatelessWidget {
             title: 'Book Journal',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightThemeMode,
-            // Kullanıcı giriş yaptıysa HomePage, yapmadıysa LogInPage
             home: firebaseUser != null && appUser != null
                 ? HomePage(user: appUser)
-                :  SplashScreen(),
-                  locale: const Locale('tr'),
-  supportedLocales: [
-    const Locale('tr'),
-  ],
-  localizationsDelegates: [
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
+                : const SplashScreen(),
+            locale: const Locale('tr'),
+            supportedLocales: const [
+              Locale('tr'),
+            ],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             routes: {
               '/login': (context) => const LogInPage(),
               '/addBook': (context) => BookFormPage(),

@@ -1,50 +1,23 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart';
 
-Widget buildBookImage(String? imageUrl, String? imagePath, {double width = 120, double height = 180}) {
-  Widget imageWidget;
+Future<String?> pickAndUploadImage() async {
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-  if (imageUrl != null && imageUrl.isNotEmpty) {
-    imageWidget = Image.network(
-      imageUrl,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => emptyImagePlaceholder(width: width, height: height),
-    );
-  } else if (imagePath != null && imagePath.isNotEmpty && File(imagePath).existsSync()) {
-    imageWidget = Image.file(
-      File(imagePath),
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-    );
-  } else {
-    imageWidget = emptyImagePlaceholder(width: width, height: height);
+  if (pickedFile == null) return null;
+
+  File file = File(pickedFile.path);
+  String fileName = basename(file.path);
+
+  try {
+    final ref = FirebaseStorage.instance.ref().child('images/$fileName');
+    await ref.putFile(file);
+    return await ref.getDownloadURL();
+  } catch (e) {
+    print('Firebase upload error: $e');
+    return null;
   }
-
-  return Container(
-    width: width,
-    height: height,
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: imageWidget,
-  );
-}
-
-Widget emptyImagePlaceholder({double width = 120, double height = 180}) {
-  return Container(
-    width: width,
-    height: height,
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey.shade400),
-      borderRadius: BorderRadius.circular(8),
-      color: Colors.grey.shade100,
-    ),
-    child: Center(
-      child: Icon(Icons.add_photo_alternate, size: width * 0.4, color: Colors.grey),
-    ),
-  );
 }

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 class AppPallete {
-  static const Color backgroundColor = Color(0xFF78866B); // modern haki
+  static const Color backgroundColor = Color(0xFF6E7B58); // modern haki
   static const Color gradient1 = Color(0xFFF3F4F1);        // açık gri
-  static const Color gradient2 = Color(0xFFF5F3F0);        // nötr açık
-  static const Color gradient3 = Color(0xFF734F4F);        // kahverengimsi vurgu
+  static const Color gradient2 = Color(0xFFF6F4F0);        // nötr açık
+  static const Color gradient3 = Color.fromARGB(255, 88, 51, 51);        // kahverengimsi vurgu
 
   static const Color borderColor = Color.fromRGBO(45, 49, 66, 1.0);
   static const Color whiteColor = Colors.white;
   static const Color greyColor = Colors.grey;
-  static const Color errorColor = Colors.redAccent;
+  static const Color errorColor = Color.fromARGB(202, 199, 34, 34);
   static const Color transparentColor = Colors.transparent;
       /*static const Color backgroundColor = Color(0xFFaeb5a1);
       static const Color backgroundColor = Color(0xFF919b80);

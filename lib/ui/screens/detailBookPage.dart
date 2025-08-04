@@ -59,7 +59,6 @@ Widget _buildBookHeader() {
     children: [
       buildBookImage(
         _book.imageUrl.isNotEmpty ? _book.imageUrl : null,
-        _book.imagePath.isNotEmpty ? _book.imagePath : null,
       ),
       const SizedBox(width: 16),
       Expanded(child: _buildBookInfo()),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:book_journal/data/repository/bookRepository.dart';
 import 'package:book_journal/data/services/firebase_service.dart';
 import 'package:book_journal/ui/models/book.dart';
@@ -29,4 +31,9 @@ class FirebaseBookRepository implements BookRepository {
   Future<void> updateBook(Book book) async {
     await _firebaseService.updateBook(book.id, book);
   }
+    @override
+  Future<String> uploadBookImage(File imageFile) async {
+    return await _firebaseService.uploadBookImage(imageFile);
+  }
+
 }
