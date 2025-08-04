@@ -8,6 +8,6 @@ abstract class BookRepository {
   Future<List<Book>> searchBooks(String query);
   Future<void> deleteBook(Book book);
   Future<void> updateBook(Book book);
-Future<String> uploadBookImage(File imageFile);
+  Future<String> uploadBookImage(File imageFile);
 
 }

@@ -58,7 +58,6 @@ Future<List<Book>> getBooks() async {
   }
 }
 
-
 @override
 Future<List<Book>> searchBooks(String query) async {
   if (query.isEmpty) return [];
@@ -122,6 +121,5 @@ Future<void> updateBook(Book book) async {
   @override
   Future<String> uploadBookImage(File imageFile) async {
     return await firebaseService.uploadBookImage(imageFile);
-  }
-  
+  } 
 }
