@@ -32,17 +32,6 @@ String normalize(String input) {
     .replaceAll('ü', 'u');
 }
 
-  // Kitapları yüklerken filtreleme işlemi de yapılır
-void _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
-  emit(BookLoading());
-  try {
-    final books = await bookRepository.getBooks();  // userId olmadan tüm kitapları getir
-    final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor);
-    emit(BookLoaded(books: books, filteredBooks: filteredBooks, filterStatus: ReadingStatus.okunuyor.toString()));
-  } catch (e) {
-    emit(BookError(message: "Kitaplar yüklenirken hata oluştu"));
-  }
-}
 
   // Kitapları durumlarına göre filtreler
 void _onFilterBooks(FilterBooks event, Emitter<BookState> emit) {
@@ -116,15 +105,33 @@ List<Book> _filterBooks(List<Book> books, ReadingStatus status) {
     }
   }
 
-  void _onFetchBooks(FetchBooks event, Emitter<BookState> emit) async {
-    try {
-      final books = await bookRepository.getBooks();
-      final filteredBooks = _filterBooks(books, ReadingStatus.okunuyor);
-      emit(BookLoaded(books: books, filteredBooks:  filteredBooks, filterStatus: ReadingStatus.okunuyor.toString()));
-    } catch (e) {
-      emit(BookError(message: "Kitaplar yüklenirken hata oluştu"));
-    }
+ void _onLoadBooks(LoadBooks event, Emitter<BookState> emit) async {
+  emit(BookLoading());
+  try {
+    final books = await bookRepository.getBooks();
+    emit(BookLoaded(
+      books: books,
+      filteredBooks: books, // filtre yok, tüm kitaplar
+      filterStatus: ReadingStatus.tumKitaplar.name, // filtre başlangıçta tüm kitaplar
+    ));
+  } catch (e) {
+    emit(BookError(message: "Kitaplar yüklenirken hata oluştu"));
   }
+}
+
+void _onFetchBooks(FetchBooks event, Emitter<BookState> emit) async {
+  try {
+    final books = await bookRepository.getBooks();
+    emit(BookLoaded(
+      books: books,
+      filteredBooks: books, // filtre yok, tüm kitaplar
+      filterStatus: ReadingStatus.tumKitaplar.name, // filtre başlangıçta tüm kitaplar
+    ));
+  } catch (e) {
+    emit(BookError(message: "Kitaplar yüklenirken hata oluştu"));
+  }
+}
+
 void _onLoadReadingStats(ReadingStats event, Emitter<BookState> emit) async {
   try {
     final books = await bookRepository.getBooks();

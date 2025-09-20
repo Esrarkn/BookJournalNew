@@ -10,22 +10,28 @@ class Fabbutton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
-    onPressed: () async {
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => BookFormPage()),
-  );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-  // Kullanıcı kitap eklediyse anasayfayı yenile
-  if (result != null) {
-    context.read<BookBloc>().add(FetchBooks());
-  }
-}
-,
-      backgroundColor: AppPallete.gradient1,
+    return FloatingActionButton(
+      heroTag: null,
+      onPressed: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => BookFormPage()),
+        );
+
+        // Kullanıcı kitap eklediyse anasayfayı yenile
+        if (result != null) {
+          context.read<BookBloc>().add(FetchBooks());
+        }
+      },
+      backgroundColor: isDark ? AppDarkPalette.primary : AppPalette.background,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Icon(Icons.add, size: 30, color: AppPallete.gradient3),
+      child: Icon(
+        Icons.add,
+        size: 30,
+        color: isDark ? AppDarkPalette.textPrimary : AppPalette.primary,
+      ),
     );
   }
 }

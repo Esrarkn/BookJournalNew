@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:book_journal/data/repository/bookRepository.dart';
 import 'package:book_journal/data/services/firebase_service.dart';
 import 'package:book_journal/ui/models/book.dart';
+import 'package:book_journal/ui/models/session.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -122,4 +123,20 @@ Future<void> updateBook(Book book) async {
   Future<String> uploadBookImage(File imageFile) async {
     return await firebaseService.uploadBookImage(imageFile);
   } 
+  Stream<List<Session>> watchSessionsForBook(String bookId) {
+  return _firestore
+      .collection('books')
+      .doc(bookId)
+      .collection('sessions')
+      .orderBy('date', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Session(
+              minutes: data['minutes'] ?? 0,
+              date: (data['date'] as Timestamp).toDate(),
+            );
+          }).toList());
+}
+
 }

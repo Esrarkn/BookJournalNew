@@ -5,7 +5,7 @@ class CategorySelector extends StatefulWidget {
   final List<String> existingCategories;
   final ValueChanged<String> onCategorySelected;
 
-   CategorySelector({Key? key, required this.existingCategories, required this.onCategorySelected, String? selectedCategory,}) : super(key: key);
+   CategorySelector({Key? key, required this.existingCategories, required this.onCategorySelected, String? selectedCategory, required List<String> categories,}) : super(key: key);
 
   @override
   _CategorySelectorState createState() => _CategorySelectorState();
@@ -38,7 +38,7 @@ class _CategorySelectorState extends State<CategorySelector> {
         DropdownButtonFormField<String>(
           isExpanded: true,
           isDense: true,
-          dropdownColor: AppPallete.backgroundColor,
+          dropdownColor: AppPalette.background,
           value: selectedCategory,
           hint: Text('Kategori Seç'),
           items: categories.map((category) {
@@ -95,7 +95,7 @@ class _CategorySelectorState extends State<CategorySelector> {
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20),
               textStyle: TextStyle(fontSize: 14),
-              backgroundColor: AppPallete.gradient2,
+              backgroundColor: AppPalette.primary,
             ),
           ),
         ],
@@ -103,7 +103,7 @@ class _CategorySelectorState extends State<CategorySelector> {
         if (selectedCategory != null)
           Text(
             'Seçilen Kategori: $selectedCategory',
-            style: TextStyle(fontSize: 13, color: AppPallete.gradient1),
+            style: TextStyle(fontSize: 13, color: AppPalette.primary),
           ),
       ],
     ),

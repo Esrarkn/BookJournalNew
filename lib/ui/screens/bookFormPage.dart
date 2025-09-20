@@ -1,17 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
-
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_bloc.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_event.dart';
 import 'package:book_journal/data/bloc/book_bloc/book_state.dart';
 import 'package:book_journal/ui/models/book.dart';
-import 'package:book_journal/ui/widgets/book_image.dart'; // buildBookImage fonksiyonun varsa oradan
-import 'package:book_journal/ui/widgets/categorySelector.dart';
+import 'package:book_journal/ui/widgets/appBackground.dart';
+import 'package:book_journal/ui/widgets/appHeader.dart';
 import 'package:book_journal/ui/widgets/saveButton.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
@@ -29,17 +29,32 @@ class _BookFormPageState extends State<BookFormPage> {
   final _summaryController = TextEditingController();
   final _feelingsController = TextEditingController();
   final _quotesController = TextEditingController();
-  final _searchController = TextEditingController();
 
-  String? _bookImageUrl; // sadece URL tutulacak, local path yok
+  String? _bookImageUrl;
   bool _showSuggestions = false;
-  ReadingStatus _status = ReadingStatus.okunuyor;
+  bool _suggestionSelected = false;
   DateTime? _startDate;
   DateTime? _endDate;
-  String? _selectedEmoji;
-  String? _selectedCategory;
+  int _rating = 0;
+  String _selectedCategory = 'Genel';
 
   final ImagePicker _picker = ImagePicker();
+  List<Map<String, dynamic>> _suggestions = [];
+
+  final List<Map<String, dynamic>> _categories = [
+    {'name': 'Genel', 'icon': Icons.book, 'color': Colors.grey.shade600},
+    {'name': 'Roman', 'icon': Icons.auto_stories, 'color': Colors.blue},
+    {'name': 'Bilim Kurgu', 'icon': Icons.rocket_launch, 'color': Colors.purple},
+    {'name': 'Fantastik', 'icon': Icons.auto_fix_high, 'color': Colors.pink},
+    {'name': 'Polisiye', 'icon': Icons.search, 'color': Colors.orange},
+    {'name': 'Biyografi', 'icon': Icons.person, 'color': Colors.green},
+    {'name': 'Tarih', 'icon': Icons.history_edu, 'color': Colors.brown},
+    {'name': 'Felsefe', 'icon': Icons.psychology, 'color': Colors.indigo},
+    {'name': 'Bilim', 'icon': Icons.science, 'color': Colors.teal},
+    {'name': 'Sanat', 'icon': Icons.palette, 'color': Colors.red},
+    {'name': 'Kişisel Gelişim', 'icon': Icons.trending_up, 'color': Colors.amber.shade700},
+    {'name': 'Çocuk', 'icon': Icons.child_care, 'color': Colors.cyan},
+  ];
 
   @override
   void initState() {
@@ -52,106 +67,180 @@ class _BookFormPageState extends State<BookFormPage> {
       _feelingsController.text = book.feelings;
       _quotesController.text = book.quotes;
       _bookImageUrl = book.imageUrl.isNotEmpty ? book.imageUrl : null;
-      _status = book.status;
       _startDate = book.startDate;
       _endDate = book.endDate;
-      _selectedCategory = book.category;
-      _selectedEmoji = book.description.isNotEmpty ? book.description : null;
+      _rating = book.rating ?? 0;
+      _selectedCategory = (book.category != null && book.category!.isNotEmpty) ? book.category! : 'Genel';
+    }
+    _titleController.addListener(_titleListener);
+  }
+
+  @override
+  void dispose() {
+    _titleController.removeListener(_titleListener);
+    _titleController.dispose();
+    _authorController.dispose();
+    _summaryController.dispose();
+    _feelingsController.dispose();
+    _quotesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchBookSuggestions(String query) async {
+    final url = Uri.parse('https://www.googleapis.com/books/v1/volumes?q=$query&maxResults=10');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List items = data['items'] ?? [];
+        setState(() {
+          _suggestions = items.map<Map<String, dynamic>>((item) {
+            final volumeInfo = item['volumeInfo'] ?? {};
+            return {
+              'title': volumeInfo['title'] ?? '',
+              'authors': volumeInfo['authors'] ?? [],
+              'imageLinks': volumeInfo['imageLinks'] ?? {},
+              'categories': volumeInfo['categories'] ?? [],
+              'description': volumeInfo['description'] ?? '',
+            };
+          }).toList();
+          _showSuggestions = _suggestions.isNotEmpty;
+        });
+      } else {
+        setState(() {
+          _suggestions = [];
+          _showSuggestions = false;
+        });
+      }
+    } catch (e) {
+      print('API Error: $e');
+      setState(() {
+        _suggestions = [];
+        _showSuggestions = false;
+      });
     }
   }
 
-Future<void> pickAndUploadImage(ImageSource source) async {
-  final pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
-  if (pickedFile == null) return;
-
-  File file = File(pickedFile.path);
-  String fileName = '${Uuid().v4()}.${file.path.split('.').last}';
-
-  try {
-    final ref = FirebaseStorage.instance.ref().child('images/$fileName');
-    await ref.putFile(file);
-    final downloadURL = await ref.getDownloadURL();
-
-    setState(() {
-      _bookImageUrl = downloadURL;
-    });
-  } catch (e) {
-    print('Görsel yükleme hatası: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Görsel yüklenirken hata oluştu.")),
-    );
-  }
-}
-
-
-  Future<void> _selectDate(bool isStart) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now()),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      setState(() => isStart ? _startDate = picked : _endDate = picked);
+  String _mapGoogleCategoryToLocal(List<dynamic> googleCategories) {
+    if (googleCategories.isEmpty) return 'Genel';
+    final firstCategory = googleCategories.first.toString().toLowerCase();
+    final categoryMap = {
+      'fiction': 'Roman',
+      'science fiction': 'Bilim Kurgu',
+      'fantasy': 'Fantastik',
+      'mystery': 'Polisiye',
+      'detective': 'Polisiye',
+      'thriller': 'Polisiye',
+      'biography': 'Biyografi',
+      'autobiography': 'Biyografi',
+      'history': 'Tarih',
+      'philosophy': 'Felsefe',
+      'religion': 'Felsefe',
+      'psychology': 'Felsefe',
+      'science': 'Bilim',
+      'art': 'Sanat',
+      'poetry': 'Sanat',
+      'self-help': 'Kişisel Gelişim',
+      'business': 'Kişisel Gelişim',
+      'health': 'Kişisel Gelişim',
+      'fitness': 'Kişisel Gelişim',
+      'juvenile': 'Çocuk',
+      'young adult': 'Roman',
+      'romance': 'Roman',
+      'horror': 'Fantastik',
+      'cooking': 'Genel',
+      'travel': 'Genel',
+      'sports': 'Genel',
+      'true crime': 'Polisiye',
+    };
+    for (final entry in categoryMap.entries) {
+      if (firstCategory.contains(entry.key)) return entry.value;
     }
+    return 'Genel';
   }
 
-  void _saveBook() async {
-    if (_startDate != null && _endDate != null && _startDate!.isAfter(_endDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Bitiş tarihi başlangıç tarihinden önce olamaz!"), backgroundColor: Colors.red),
-      );
+  void _titleListener() {
+    if (_suggestionSelected) {
+      _suggestionSelected = false;
       return;
     }
+    final text = _titleController.text.trim();
+    if (text.isEmpty) {
+      setState(() {
+        _showSuggestions = false;
+        _suggestions = [];
+      });
+    } else {
+      _fetchBookSuggestions(text);
+    }
+  }
 
+  Future<void> pickAndUploadImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
+    if (pickedFile == null) return;
+    File file = File(pickedFile.path);
+    String fileName = '${Uuid().v4()}.${file.path.split('.').last}';
+    try {
+      final ref = FirebaseStorage.instance.ref().child('images/$fileName');
+      await ref.putFile(file);
+      final downloadURL = await ref.getDownloadURL();
+      setState(() {
+        _bookImageUrl = downloadURL;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Görsel yüklenirken hata oluştu.")),
+      );
+    }
+  }
+
+  void _selectBookFromSuggestion(Map<String, dynamic> book) {
+    final imageUrl = book['imageLinks']?['thumbnail'] ?? '';
+    final authors = (book['authors'] as List<dynamic>?)?.join(', ') ?? 'Bilinmeyen yazar';
+    final categories = book['categories'] as List<dynamic>? ?? [];
+    final suggestedCategory = _mapGoogleCategoryToLocal(categories);
+
+    _titleController.removeListener(_titleListener);
+    
+    setState(() {
+      _titleController.text = book['title'] ?? '';
+      _authorController.text = authors;
+      _bookImageUrl = imageUrl.isNotEmpty ? imageUrl : null;
+      _selectedCategory = suggestedCategory;
+      _titleController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _titleController.text.length),
+      );
+      _showSuggestions = false;
+      _suggestions = [];
+    });
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _titleController.addListener(_titleListener);
+    });
+
+    if (categories.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kategori otomatik olarak "$suggestedCategory" seçildi'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+    FocusScope.of(context).unfocus();
+  }
+
+  void _saveBook() {
     if (_titleController.text.isEmpty || _authorController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Kitap adı ve yazar boş olamaz!"), backgroundColor: Colors.red),
+        const SnackBar(content: Text("Kitap adı ve yazar boş olamaz!"), backgroundColor: Colors.red),
       );
       return;
     }
 
-    Future<void> _showCompletionDialog() async {
-      List<String> emojis = ['😍', '🙂', '😐', '😢', '😡'];
-
-      await AwesomeDialog(
-        context: context,
-        dialogType: DialogType.success,
-        animType: AnimType.topSlide,
-        title: 'Kitabı Tamamladın!',
-        desc: 'Kitabı nasıl değerlendirirsin?',
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Kitabı nasıl değerlendirirsin?", style: TextStyle(fontSize: 18)),
-            SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              children: emojis.map((emoji) => GestureDetector(
-                onTap: () {
-                  setState(() => _selectedEmoji = emoji);
-                  Navigator.of(context).pop();
-                },
-                child: Text(emoji, style: TextStyle(fontSize: 30)),
-              )).toList(),
-            ),
-          ],
-        ),
-        btnCancelOnPress: () => _selectedEmoji = null,
-        btnCancelText: "Vazgeç",
-        btnCancelColor: AppPallete.gradient2,
-        dismissOnTouchOutside: false,
-        dialogBackgroundColor: AppPallete.backgroundColor,
-        buttonsTextStyle: TextStyle(color: AppPallete.gradient3),
-      ).show();
+    if (_rating > 0 && _endDate == null) {
+      _endDate = DateTime.now();
     }
-
-    if (_endDate != null && _selectedEmoji == null) {
-      await _showCompletionDialog();
-      if (_selectedEmoji == null) return;
-    }
-
-    _status = _endDate != null ? ReadingStatus.okundu : ReadingStatus.okunuyor;
 
     final book = Book(
       id: widget.book?.id ?? Uuid().v4(),
@@ -161,12 +250,15 @@ Future<void> pickAndUploadImage(ImageSource source) async {
       feelings: _feelingsController.text.trim(),
       quotes: _quotesController.text.trim(),
       imageUrl: _bookImageUrl ?? '',
-      imagePath: '', // artık kullanılmıyor, boş bırak
-      description: _selectedEmoji ?? '',
-      status: _status,
+      imagePath: '',
+      description: '',
+      status: (_endDate != null || _rating > 0)
+          ? ReadingStatus.okundu
+          : ReadingStatus.okunuyor,
       startDate: _startDate,
       endDate: _endDate,
-      category: _selectedCategory ?? 'Bilinmeyen',
+      category: _selectedCategory,
+      rating: _rating,
     );
 
     context.read<BookBloc>().add(ClearSearchResultsEvent());
@@ -177,314 +269,630 @@ Future<void> pickAndUploadImage(ImageSource source) async {
     }
   }
 
-void _showImageSourceDialog() {
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: Text("Fotoğraf Seç"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: Icon(Icons.photo_library),
-            title: Text("Galeriden Seç"),
-            onTap: () {
-              Navigator.pop(context);
-              pickAndUploadImage(ImageSource.gallery);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.camera_alt),
-            title: Text("Fotoğraf Çek"),
-            onTap: () {
-              Navigator.pop(context);
-              pickAndUploadImage(ImageSource.camera);
-            },
-          ),
-        ],
+  void _showImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Fotoğraf Seç", style: TextStyle(fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.photo_library, color: Colors.blue),
+              ),
+              title: const Text("Galeriden Seç"),
+              onTap: () {
+                Navigator.pop(context);
+                pickAndUploadImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.camera_alt, color: Colors.green),
+              ),
+              title: const Text("Fotoğraf Çek"),
+              onTap: () {
+                Navigator.pop(context);
+                pickAndUploadImage(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-
-  Widget _buildTextField(TextEditingController controller, String label, {int maxLines = 1}) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: screenHeight * 0.01),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        style: TextStyle(fontSize: screenWidth * 0.04),
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(
-            vertical: screenHeight * 0.012,
-            horizontal: screenWidth * 0.04,
+  void _showCategoryDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Kategori Seç", style: TextStyle(fontWeight: FontWeight.w600)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _categories.length,
+            itemBuilder: (context, index) {
+              final category = _categories[index];
+              final isSelected = _selectedCategory == category['name'];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? category['color'].withOpacity(0.1) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ListTile(
+                  leading: Icon(
+                    category['icon'],
+                    color: category['color'],
+                  ),
+                  title: Text(
+                    category['name'],
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected ? category['color'] : Colors.black87,
+                    ),
+                  ),
+                  trailing: isSelected ? Icon(Icons.check_circle, color: category['color']) : null,
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = category['name'];
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSearchSuggestions(BookState state) {
-    if (state is BookLoading) return Center(child: CircularProgressIndicator());
-    if (state is BookLoaded) {
-      if (state.filteredBooks.isEmpty) return Text("Sonuç bulunamadı.");
-      return SizedBox(
-        height: 200,
+  Widget buildBookImage(String? imageUrl, {double width = 140, double height = 200}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppPalette.primary,
+            AppPalette.primary.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppPalette.primary.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: imageUrl != null && imageUrl.isNotEmpty
+            ? Image.network(
+                imageUrl,
+                width: width,
+                height: height,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.menu_book, size: 60, color: Colors.white);
+                },
+              )
+            : const Icon(Icons.menu_book, size: 60, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildModernTextField(
+    TextEditingController controller, 
+    String hint, {
+    int maxLines = 1, 
+    IconData? icon,
+    String? label,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (label != null) ...[
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            maxLines: maxLines,
+            style: const TextStyle(color: Colors.black87, fontSize: 15),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+              prefixIcon: icon != null 
+                  ? Icon(icon, color: Colors.grey.shade600, size: 20) 
+                  : null,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: icon != null ? 12 : 16, 
+                vertical: maxLines > 1 ? 16 : 14,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernSection({
+    required String title,
+    required IconData icon,
+    required Widget child,
+    required Color color,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.05),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategorySelector() {
+    final selectedCategoryData = _categories.firstWhere(
+      (cat) => cat['name'] == _selectedCategory,
+      orElse: () => _categories[0],
+    );
+
+    return GestureDetector(
+      onTap: _showCategoryDialog,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(selectedCategoryData['icon'], color: selectedCategoryData['color'], size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _selectedCategory,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRatingStars() {
+    return Row(
+      children: List.generate(5, (index) {
+        return GestureDetector(
+          onTap: () => setState(() => _rating = index + 1),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Icon(
+              Icons.star,
+              size: 28,
+              color: index < _rating ? Colors.amber.shade600 : Colors.grey.shade300,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildDateSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.calendar_today, color: Colors.grey.shade600, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _endDate != null
+                  ? "${_endDate!.day}.${_endDate!.month}.${_endDate!.year}"
+                  : "Bitiş tarihi seç (opsiyonel)",
+              style: TextStyle(
+                fontSize: 15,
+                color: _endDate != null ? Colors.black87 : Colors.grey.shade500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final pickedDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (pickedDate != null) {
+                setState(() => _endDate = pickedDate);
+              }
+            },
+            child: Text("Seç", style: TextStyle(color: AppPalette.primary, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchSuggestions() {
+    if (!_showSuggestions || _suggestions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 200),
         child: ListView.builder(
-          itemCount: state.filteredBooks.length,
+          shrinkWrap: true,
+          itemCount: _suggestions.length,
           itemBuilder: (context, index) {
-            final book = state.filteredBooks[index];
+            final book = _suggestions[index];
+            final imageUrl = book['imageLinks']?['thumbnail'] ?? '';
+            final authors = (book['authors'] as List<dynamic>?)?.join(', ') ?? 'Bilinmeyen yazar';
+
             return ListTile(
-              leading: book.imageUrl.isNotEmpty
-                  ? Image.network(book.imageUrl, width: 50, height: 75, fit: BoxFit.cover)
-                  : Icon(Icons.book, size: 50),
-              title: Text(book.title),
-              subtitle: Text(book.author),
-              onTap: () => setState(() {
-                _searchController.clear();
-                _titleController.text = book.title;
-                _authorController.text = book.author;
-                _bookImageUrl = book.imageUrl.isNotEmpty ? book.imageUrl : null;
-                _showSuggestions = false;
-              }),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: SizedBox(
+                width: 35,
+                height: 50,
+                child: imageUrl.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(Icons.book, size: 16),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(Icons.book, size: 16),
+                      ),
+              ),
+              title: Text(
+                book['title'] ?? '',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                authors,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => _selectBookFromSuggestion(book),
             );
           },
         ),
-      );
-    }
-    if (state is BookError) return Text("Hata: ${state.message}", style: TextStyle(color: Colors.red));
-    return SizedBox.shrink();
+      ),
+    );
   }
-
-  final List<String> defaultCategories = [
-    'Roman', 'Kişisel Gelişim', 'Psikoloji', 'Tarih', 'Felsefe', 'Bilim', 'Biyografi',
-    'Otobiyografi', 'Şiir', 'Fantastik', 'Bilim Kurgu', 'Gerilim / Polisiye', 'Çocuk Kitapları',
-    'Gençlik', 'Edebiyat', 'Din / Spiritüel', 'İş Dünyası / Girişimcilik', 'Ekonomi', 'Sağlık',
-    'Beslenme / Diyet', 'Gezi / Seyahat', 'Eğitim / Öğretim', 'Kültür / Sanat', 'Aile / Evlilik',
-    'Motivasyon', 'Klasikler', 'Manga / Çizgi Roman', 'Kısa Öykü', 'Deneme / Makale', 'Anı / Hatıra',
-  ];
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return BlocListener<BookBloc, BookState>(
       listener: (context, state) {
         if (state is BookAddedSuccess || state is BookUpdatedSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state is BookAddedSuccess ? "Kitap başarıyla eklendi!" : "Kitap başarıyla güncellendi!")),
+            SnackBar(
+              content: Text(
+                state is BookAddedSuccess
+                    ? "Kitap başarıyla eklendi!"
+                    : "Kitap başarıyla güncellendi!",
+              ),
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
-          Navigator.pop(context, state is BookUpdatedSuccess ? state.book : true);
-        } else if (state is BookError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Hata: ${state.message}"), backgroundColor: Colors.red),
-          );
+          Navigator.pop(context, true);
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: Text("Kitap Günlüğü")),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+        backgroundColor: Colors.grey.shade50,
+        body: AppBackground(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Kitap Ara
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-                child: TextFormField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    context.read<BookBloc>().add(SearchBooksFromGoogle(value));
-                    setState(() => _showSuggestions = true);
-                  },
-                  style: TextStyle(fontSize: screenWidth * 0.035),
-                  decoration: InputDecoration(
-                    hintText: 'Kitap ara...',
-                    prefixIcon: Icon(Icons.search, size: screenWidth * 0.05, color: AppPallete.gradient1),
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.clear, size: screenWidth * 0.05, color: AppPallete.gradient1),
-                      onPressed: () {
-                        _searchController.clear();
-                        context.read<BookBloc>().add(ClearSearchResultsEvent());
-                        setState(() => _showSuggestions = false);
-                      },
-                    ),
-                    filled: true,
-                    isDense: true,
-                    fillColor: AppPallete.backgroundColor,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
+              AppHeader(
+                icon: Icons.arrow_back_ios,
+                title: widget.book != null ? "Kitap Güncelle" : "Yeni Kitap Ekle",
+                onBack: () => Navigator.pop(context),
               ),
-              if (_showSuggestions) BlocBuilder<BookBloc, BookState>(builder: (_, state) => _buildSearchSuggestions(state)),
-              SizedBox(height: screenHeight * 0.02),
-
-              // Kitap görseli ve detay alanları
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: _showImageSourceDialog,
-                    child: Container(
-                      width: 120,
-                      height: 180,
-                      child: buildBookImage(_bookImageUrl), // sadece URL gönderiyoruz
-                    ),
-                  ),
-                  SizedBox(width: screenWidth * 0.04),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _titleController.text.isNotEmpty ? _titleController.text : "Kitap Adı",
-                          style: TextStyle(fontSize: screenWidth * 0.045, fontWeight: FontWeight.bold, color: AppPallete.gradient2),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          _authorController.text.isNotEmpty ? _authorController.text : "Yazar",
-                          style: TextStyle(fontSize: screenWidth * 0.03, color: AppPallete.gradient2),
-                        ),
-                        SizedBox(height: screenHeight * 0.01),
-                        SizedBox(
-                          width: screenWidth * 0.4 < 100 ? 100 : screenWidth * 0.6,
-                          child: CategorySelector(
-                            existingCategories: defaultCategories,
-                            onCategorySelected: (category) => setState(() => _selectedCategory = category),
-                            selectedCategory: _selectedCategory,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.01),
-                        Row(
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      // Kitap resmi
+                      Center(
+                        child: Stack(
                           children: [
-                            Expanded(
-                              child: TextButton(
-                                onPressed: () => _selectDate(true),
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                                ),
-                                child: _startDate == null
-                                    ? Row(
-                                        children: [
-                                          Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.04),
-                                          SizedBox(width: 4),
-                                          Expanded(
-                                            child: Text(
-                                              "Başlangıç Tarihi",
-                                              style: TextStyle(
-                                                color: AppPallete.gradient1,
-                                                fontSize: screenWidth * 0.034,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.035),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                "Başlangıç",
-                                                style: TextStyle(
-                                                  color: AppPallete.gradient1,
-                                                  fontSize: screenWidth * 0.028,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            "${_startDate?.day}.${_startDate?.month}.${_startDate?.year}",
-                                            style: TextStyle(
-                                              fontSize: screenWidth * 0.03,
-                                              fontWeight: FontWeight.w400,
-                                              color: AppPallete.gradient2,
-                                            ),
-                                          ),
-                                        ],
+                            buildBookImage(_bookImageUrl, 
+                                width: screenWidth * 0.32, 
+                                height: screenWidth * 0.45),
+                            Positioned(
+                              bottom: -4,
+                              right: -4,
+                              child: GestureDetector(
+                                onTap: _showImageSourceDialog,
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
                                       ),
-                              ),
-                            ),
-                            Expanded(
-                              child: TextButton(
-                                onPressed: () => _selectDate(false),
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.edit, color: Colors.grey, size: 18),
                                 ),
-                                child: _endDate == null
-                                    ? Row(
-                                        children: [
-                                          Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.04),
-                                          SizedBox(width: 4),
-                                          Expanded(
-                                            child: Text(
-                                              "Bitiş Tarihi",
-                                              style: TextStyle(
-                                                color: AppPallete.gradient1,
-                                                fontSize: screenWidth * 0.034,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Icon(Icons.calendar_today, color: AppPallete.gradient1, size: screenWidth * 0.035),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                "Bitiş",
-                                                style: TextStyle(
-                                                  color: AppPallete.gradient1,
-                                                  fontSize: screenWidth * 0.028,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            "${_endDate?.day}.${_endDate?.month}.${_endDate?.year}",
-                                            style: TextStyle(
-                                              fontSize: screenWidth * 0.03,
-                                              fontWeight: FontWeight.w400,
-                                              color: AppPallete.gradient2,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                               ),
                             ),
                           ],
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
-              _buildTextField(_summaryController, "Kitap Özeti", maxLines: 3),
-              _buildTextField(_feelingsController, "Okurken Hissettiklerim", maxLines: 3),
-              _buildTextField(_quotesController, "Alıntılar", maxLines: 3),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
 
-              SizedBox(height: screenHeight * 0.03),
-              modernSaveButton(
-               widget.book == null ? "Kitap Ekle" : "Kitap Güncelle", _saveBook,
+                      // Kitap bilgileri
+                      _buildModernSection(
+                        title: 'Kitap Bilgileri',
+                        icon: Icons.menu_book,
+                        color: Colors.blue.shade600,
+                        child: Column(
+                          children: [
+                            Column(
+                              children: [
+                                _buildModernTextField(_titleController, 'Kitap adını yazın...', 
+                                    icon: Icons.title, label: 'Kitap Adı'),
+                                _buildSearchSuggestions(),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _buildModernTextField(_authorController, "Yazar adını yazın...", 
+                                icon: Icons.person, label: 'Yazar'),
+                            const SizedBox(height: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Kategori',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildCategorySelector(),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Duygular
+                      _buildModernSection(
+                        title: 'Bu kitap sana neler hissettirdi?',
+                        icon: Icons.favorite,
+                        color: Colors.pink.shade500,
+                        child: _buildModernTextField(
+                          _feelingsController,
+                          'Bu kitabı okurken neler hissettin? Duygularını paylaş...',
+                          maxLines: 4,
+                        ),
+                      ),
+
+                      // Alıntılar
+                      _buildModernSection(
+                        title: 'Favori alıntın',
+                        icon: Icons.format_quote,
+                        color: Colors.orange.shade600,
+                        child: _buildModernTextField(
+                          _quotesController,
+                          'Bu kitaptan seni en çok etkileyen alıntı neydi?',
+                          maxLines: 3,
+                        ),
+                      ),
+
+                      // Değerlendirme
+                      _buildModernSection(
+                        title: 'Değerlendirme',
+                        icon: Icons.star,
+                        color: Colors.green.shade600,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Puanım',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildRatingStars(),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'Okuma Tarihi',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDateSelector(),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppPalette.primary.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: SaveButton(
+                          text: widget.book == null ? "Kitabı Ekle" : "Güncelle",
+                          onPressed: _saveBook,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -492,38 +900,4 @@ void _showImageSourceDialog() {
       ),
     );
   }
-}
-
-// Eğer buildBookImage fonksiyonun yoksa burada kullanabilirsin:
-Widget buildBookImage(String? imageUrl, {double width = 120, double height = 180}) {
-  if (imageUrl != null && imageUrl.isNotEmpty) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: Image.network(
-        imageUrl,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return Center(child: CircularProgressIndicator());
-        },
-        errorBuilder: (_, __, ___) => _placeholderImage(width, height),
-      ),
-    );
-  } else {
-    return _placeholderImage(width, height);
-  }
-}
-
-Widget _placeholderImage(double width, double height) {
-  return Container(
-    width: width,
-    height: height,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(6),
-      color: Colors.grey[300],
-    ),
-    child: Icon(Icons.book, size: width * 0.5, color: Colors.grey[600]),
-  );
 }

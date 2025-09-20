@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:book_journal/ui/models/session.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:book_journal/ui/models/book.dart';
@@ -98,6 +99,21 @@ Future<void> updateBook(String bookId, Book book) async {
     print("Kitap güncellenirken hata oluştu: $e");
     throw Exception("Kitap güncellenirken hata oluştu");
   }
+}
+Stream<List<Session>> watchSessionsForBook(String bookId) {
+  return _firestore
+      .collection('books')
+      .doc(bookId)
+      .collection('sessions')
+      .orderBy('date', descending: true)
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Session(
+              minutes: data['minutes'] ?? 0,
+              date: (data['date'] as Timestamp).toDate(),
+            );
+          }).toList());
 }
 
 }

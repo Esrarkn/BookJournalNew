@@ -14,18 +14,18 @@ Widget modernTextField(
     child: TextField(
       controller: controller,
       maxLines: maxLines,
-      style: TextStyle(color: AppPallete.gradient3),
+      style: TextStyle(color: AppPalette.primary),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: AppPallete.gradient3.withOpacity(0.9)),
+        labelStyle: TextStyle(color: AppPalette.primary.withOpacity(0.9)),
         filled: true,
-        fillColor: AppPallete.gradient2,
+        fillColor: AppPalette.card,
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: AppPallete.gradient3)
+            ? Icon(prefixIcon, color: AppPalette.primary)
             : null,
         suffixIcon: showClearButton
             ? IconButton(
-                icon: Icon(Icons.clear, color: AppPallete.gradient1),
+                icon: Icon(Icons.clear, color: AppPalette.primary),
                 onPressed: onClear,
               )
             : null,
@@ -36,7 +36,7 @@ Widget modernTextField(
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppPallete.gradient2, width: 2),
+          borderSide: BorderSide(color: AppPalette.background, width: 2),
         ),
       ),
     ),

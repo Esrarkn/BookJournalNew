@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum ReadingStatus {
@@ -31,7 +32,6 @@ extension ReadingStatusExtension on ReadingStatus {
     }
   }
 }
-
 class Book {
   final String id;
   final String title;
@@ -40,13 +40,14 @@ class Book {
   final String imageUrl;
   final String summary;
   final String feelings;
-  final String quotes;
   final String imagePath;
   final ReadingStatus status;
   final DateTime? startDate;
   final DateTime? endDate;
   final String? category;
   final DateTime? createdAt;
+  final String quotes;
+  final int rating;
 
   Book({
     required this.id,
@@ -63,6 +64,7 @@ class Book {
     this.endDate,
     this.category,
     this.createdAt,
+    this.rating = 0, // <- default 0
   });
 
   Book copyWith({
@@ -73,13 +75,14 @@ class Book {
     String? imageUrl,
     String? summary,
     String? feelings,
-    String? quotes,
     String? imagePath,
     ReadingStatus? status,
     DateTime? startDate,
     DateTime? endDate,
     String? category,
-    DateTime? createdAt
+    DateTime? createdAt,
+    String? quotes,
+    int? rating, // <- copyWith içine eklendi
   }) {
     return Book(
       id: id ?? this.id,
@@ -95,17 +98,17 @@ class Book {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       category: category ?? this.category,
-      createdAt: createdAt ?? this.createdAt
+      createdAt: createdAt ?? this.createdAt,
+      rating: rating ?? this.rating,
     );
   }
 
   factory Book.fromGoogleApi(Map<String, dynamic> json) {
     final volumeInfo = json['volumeInfo'] ?? {};
-
     return Book(
       id: json['id'] ?? '',
       title: volumeInfo['title'] ?? '',
-      author: volumeInfo['authors']?.join(', ') ?? 'No Author',
+      author: (volumeInfo['authors'] as List<dynamic>?)?.join(', ') ?? 'No Author',
       description: volumeInfo['description'] ?? 'No Description',
       imageUrl: volumeInfo['imageLinks']?['thumbnail'] ?? '',
       summary: '',
@@ -113,56 +116,48 @@ class Book {
       quotes: '',
       imagePath: '',
       status: ReadingStatus.okunuyor,
-
+      rating: 0, // <- burada da ekledik
     );
   }
 
-factory Book.fromMap(Map<String, dynamic> map) {
-  return Book(
-    id: map['id'] ?? '',
-    title: map['title'] ?? '',
-    author: map['author'] ?? '',
-    description: map['description'] ?? '',
-    imageUrl: map['imageUrl'] ?? '',
-    summary: map['summary'] ?? '',
-    feelings: map['feelings'] ?? '',
-    quotes: map['quotes'] ?? '',
-    imagePath: map['imagePath'] ?? '',
-    status: ReadingStatusExtension.fromString(map['status'] ?? 'okunuyor'),
-    startDate: map['startDate'] != null ? DateTime.tryParse(map['startDate']) : null,
-    endDate: map['endDate'] != null ? DateTime.tryParse(map['endDate']) : null,
-    category: map["category"],
-    createdAt: map['createdAt'] != null ? (map['createdAt'] as Timestamp).toDate() : null,
+  factory Book.fromMap(Map<String, dynamic> map) {
+    return Book(
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      author: map['author'] ?? '',
+      description: map['description'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      summary: map['summary'] ?? '',
+      feelings: map['feelings'] ?? '',
+      imagePath: map['imagePath'] ?? '',
+      status: ReadingStatusExtension.fromString(map['status'] ?? 'okunuyor'),
+      startDate: map['startDate'] != null ? DateTime.tryParse(map['startDate']) : null,
+      endDate: map['endDate'] != null ? DateTime.tryParse(map['endDate']) : null,
+      category: map['category'],
+      createdAt: map['createdAt'] != null ? (map['createdAt'] as Timestamp).toDate() : null,
+      quotes: map['quotes'] ?? '',
+      rating: map['rating'] ?? 0, // <- firestore'dan gelirse kullan
+    );
+  }
 
-
-  );
+  Map<String, dynamic> toMap({bool includeTimestamp = true}) {
+    final map = {
+      'id': id,
+      'title': title,
+      'author': author,
+      'description': description,
+      'imageUrl': imageUrl,
+      'summary': summary,
+      'feelings': feelings,
+      'imagePath': imagePath,
+      'status': status.stringValue,
+      'startDate': startDate?.toIso8601String(),
+      'endDate': endDate?.toIso8601String(),
+      'category': category,
+      'quotes': quotes,
+      'rating': rating, // <- kaydediliyor
+    };
+    if (includeTimestamp) map['createdAt'] = FieldValue.serverTimestamp();
+    return map;
+  }
 }
-Map<String, dynamic> toMap({bool includeTimestamp = true}) {
-    final Map<String, dynamic> map = {
-    'id': id,
-    'title': title,
-    'author': author,
-    'description': description,
-    'imageUrl': imageUrl,
-    'summary': summary,
-    'feelings': feelings,
-    'quotes': quotes,
-    'imagePath': imagePath,
-    'status': status.stringValue,
-    'startDate': startDate?.toIso8601String(),
-    'endDate': endDate?.toIso8601String(),
-    'category': category,
-  };
-
-    if (includeTimestamp) {
-      map['createdAt'] = FieldValue.serverTimestamp(); 
-    }
-
-
-  return map;
-}
-
-
-
-
-} 

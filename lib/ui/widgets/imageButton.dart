@@ -8,22 +8,22 @@ Widget modernImageButton({
 }) {
   return ElevatedButton.icon(
     onPressed: onPressed,
-    icon: Icon(icon, color: AppPallete.gradient3, size: 18),
+    icon: Icon(icon, color: AppPalette.primary, size: 18),
     label: Text(
       label,
       style: TextStyle(
-        color: AppPallete.gradient3,
+        color: AppPalette.primary,
         fontSize: 12,
       ),
     ),
     style: ElevatedButton.styleFrom(
       backgroundColor: Colors.white.withOpacity(0.9), // Açık arka plan
-      shadowColor: AppPallete.gradient3.withOpacity(0.3),
+      shadowColor: AppPalette.primary.withOpacity(0.3),
       elevation: 2,
       padding: EdgeInsets.symmetric(horizontal: 6, vertical: 13),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: AppPallete.gradient3, width: 1),
+        side: BorderSide(color: AppPalette.primary, width: 1),
       ),
       minimumSize: Size(90, 40),
     ),

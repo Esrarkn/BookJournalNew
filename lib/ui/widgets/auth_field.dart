@@ -1,59 +1,39 @@
-import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:flutter/material.dart';
 
 class AuthField extends StatelessWidget {
-  final String hintText;
   final TextEditingController controller;
-  final bool isObscureText;
+  final String hintText;
+  final bool? isObscureText;
+  final String? Function(String?)? validator;
+  final TextStyle? textStyle;
+  final TextStyle? hintStyle; // yeni parametre
 
   const AuthField({
     super.key,
-    required this.hintText,
     required this.controller,
-    this.isObscureText = false,
-    required String? Function(dynamic value) validator,
+    required this.hintText,
+    this.isObscureText,
+    this.validator,
+    this.textStyle,
+    this.hintStyle,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      obscureText: isObscureText ?? false,
+      validator: validator,
+      style: textStyle ?? TextStyle(color: Colors.black),
       decoration: InputDecoration(
         hintText: hintText,
-         hintStyle: TextStyle(color: AppPallete.gradient2),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: AppPallete.gradient1,
-            width: 3,
-          ), // Normal durumda çerçeve rengi
-          borderRadius: BorderRadius.circular(8), // İstersen köşe yuvarlama
+        hintStyle: hintStyle ?? TextStyle(color: Colors.grey),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: AppPallete.gradient3,
-            width: 3,
-          ), // Focus olduğunda çerçeve rengi
-          borderRadius: BorderRadius.circular(8),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Colors.red,
-            width: 3,
-          ), // Hata varsa çerçeve
-          borderRadius: BorderRadius.circular(8),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.redAccent, width: 3),
-          borderRadius: BorderRadius.circular(8),
-        ),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.7),
       ),
-      validator: (value) {
-        if (value!.isEmpty) {
-          return "$hintText is missing!";
-        }
-        return null;
-      },
-      obscureText: isObscureText,
     );
   }
 }

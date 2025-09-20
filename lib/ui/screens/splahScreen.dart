@@ -1,3 +1,4 @@
+import 'package:book_journal/ui/widgets/appBackground.dart';
 import 'package:flutter/material.dart';
 import 'package:book_journal/core/theme.dart/appPalette.dart';
 import 'package:lottie/lottie.dart';
@@ -49,47 +50,50 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppPallete.backgroundColor,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Lottie.asset(
-                'assets/animations/book4.json',
-                height: 250,
-                fit: BoxFit.cover,
-                controller: _lottieController,
-                onLoaded: (composition) {
-                  // animasyonu daha yavaş oynat
-                  _lottieController.duration = composition.duration * 1.2; 
-                  _lottieController.forward();
-                },
-              ),
-              Transform.translate(
-                offset: const Offset(0, -20),
-                child: const Text(
-                  'Book Journal',
+      body: AppBackground(
+        child: Center(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Lottie.asset(
+                  'assets/animations/book3.json',
+                  height: 250,
+                  fit: BoxFit.cover,
+                  controller: _lottieController,
+                  onLoaded: (composition) {
+                    // animasyonu biraz yavaşlat
+                    _lottieController.duration = composition.duration * 1.2;
+                    _lottieController.forward();
+                  },
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -20),
+                  child: Text(
+                    'Soul Book',
+                    style: TextStyle(
+                      fontSize: 50,
+                      fontWeight: FontWeight.bold,
+                      color: AppPalette.border,
+                      fontFamily: "Playfair",
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Okudukların ruhunda iz bıraksın.',
                   style: TextStyle(
-                    fontSize: 50,
-                    fontWeight: FontWeight.bold,
-                    color: AppPallete.gradient2,
+                    fontSize: 20,
+                    color: isDarkMode ? Colors.white70 : AppPalette.primary,
                     fontFamily: "Playfair",
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Keep your reading memories alive.',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: AppPallete.gradient1,
-                  fontFamily: "Playfair",
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
